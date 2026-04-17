@@ -25,6 +25,7 @@
       <h2>Beijú Tradicional</h2>
       <span>R$ 5</span>
       <button onclick="addCarrinho('Tradicional', 5)">Adicionar</button>
+      <button onclick="toggleFavorito('Tradicional', 5)">⭐</button>
     </div>
 
     <div class="item">
@@ -42,7 +43,12 @@
   </main>
 
   <aside class="carrinho">
-    <h2>Carrinho</h2>
+
+  <h2>⭐ Favoritos</h2>
+  <div id="favoritos"></div>
+
+  <h2>Carrinho</h2>
+    
 
     <div id="listaCarrinho"></div>
 

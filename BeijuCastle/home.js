@@ -1,5 +1,6 @@
 import { auth } from "./firebase.js";
-import { salvarPedido } from "./pedidos.js";
+import { salvarPedido, atualizarStatusPedido } from "./pedidos.js";
+import { favoritarItem, listarFavoritos, removerFavorito } from "./favoritos.js";
 
 import {
   onAuthStateChanged,
@@ -10,25 +11,27 @@ let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 let desconto = 0;
 let usuarioAtual = null;
 
-// LOGIN CHECK
+// ================= LOGIN =================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioAtual = user;
     document.getElementById("userEmail").textContent = "Logado: " + user.email;
+
     renderCarrinho();
+    renderFavoritos();
   } else {
     window.location.href = "index.html";
   }
 });
 
-// LOGOUT
+// ================= LOGOUT =================
 document.getElementById("logout").addEventListener("click", async () => {
   await signOut(auth);
   localStorage.removeItem("carrinho");
   window.location.href = "index.html";
 });
 
-// ADICIONAR ITEM
+// ================= CARRINHO =================
 window.addCarrinho = (nome, preco) => {
   const itemExistente = carrinho.find(i => i.nome === nome);
 
@@ -42,7 +45,45 @@ window.addCarrinho = (nome, preco) => {
   renderCarrinho();
 };
 
-// ALTERAR QTD
+// ================= FAVORITOS =================
+window.toggleFavorito = (nome, preco) => {
+  const favoritos = listarFavoritos();
+  const existe = favoritos.find(f => f.nome === nome);
+
+  if (existe) {
+    removerFavorito(nome);
+    alert("Removido dos favoritos");
+  } else {
+    favoritarItem({ nome, preco });
+    alert("Adicionado aos favoritos ⭐");
+  }
+
+  renderFavoritos();
+};
+
+// 🔥 AGORA CORRETO (FORA DE OUTRA FUNÇÃO)
+function renderFavoritos() {
+  const container = document.getElementById("favoritos");
+
+  if (!container) return;
+
+  container.innerHTML = "";
+
+  const favoritos = listarFavoritos();
+
+  favoritos.forEach(item => {
+    const div = document.createElement("div");
+
+    div.innerHTML = `
+      ${item.nome} - R$ ${item.preco}
+      <button onclick="addCarrinho('${item.nome}', ${item.preco})">Comprar</button>
+    `;
+
+    container.appendChild(div);
+  });
+}
+
+// ================= QTD =================
 window.mudarQtd = (index, tipo) => {
   if (tipo === "mais") carrinho[index].qtd++;
   if (tipo === "menos") carrinho[index].qtd--;
@@ -55,7 +96,7 @@ window.mudarQtd = (index, tipo) => {
   renderCarrinho();
 };
 
-// CUPOM
+// ================= CUPOM =================
 window.aplicarCupom = () => {
   const cupom = document.getElementById("cupom").value.toUpperCase();
 
@@ -70,13 +111,12 @@ window.aplicarCupom = () => {
   renderCarrinho();
 };
 
-// CALCULAR ENTREGA
+// ================= ENTREGA =================
 function calcularEntrega(total) {
-  if (total >= 30) return 0;
-  return 5;
+  return total >= 30 ? 0 : 5;
 }
 
-// RENDER
+// ================= RENDER =================
 function renderCarrinho() {
   const lista = document.getElementById("listaCarrinho");
   const totalEl = document.getElementById("total");
@@ -97,17 +137,15 @@ function renderCarrinho() {
     lista.appendChild(div);
   });
 
-  // DESCONTO
   total = total - (total * desconto);
 
-  // ENTREGA
   const entrega = calcularEntrega(total);
   total += entrega;
 
   totalEl.textContent = `Total: R$ ${total.toFixed(2)} (Entrega: R$ ${entrega})`;
 }
 
-// FINALIZAR PEDIDO (🔥 AGORA COMPLETO)
+// ================= FINALIZAR =================
 window.finalizarPedido = () => {
   if (carrinho.length === 0) {
     alert("Carrinho vazio!");
@@ -127,7 +165,15 @@ window.finalizarPedido = () => {
 
   salvarPedido(pedido);
 
-  alert("Pedido enviado com sucesso!");
+  setTimeout(() => {
+    atualizarStatusPedido(pedido.id, "preparando");
+  }, 3000);
+
+  setTimeout(() => {
+    atualizarStatusPedido(pedido.id, "pronto");
+  }, 7000);
+
+  alert("Pedido enviado!");
 
   carrinho = [];
   desconto = 0;
@@ -136,7 +182,7 @@ window.finalizarPedido = () => {
   renderCarrinho();
 };
 
-// CALCULAR TOTAL FINAL
+// ================= TOTAL =================
 function calcularTotalFinal() {
   let total = 0;
 
@@ -150,10 +196,13 @@ function calcularTotalFinal() {
   return total;
 }
 
-// SALVAR
+// ================= STORAGE =================
 function salvar() {
   localStorage.setItem("carrinho", JSON.stringify(carrinho));
 }
+
+// ================= PERFIL =================
 window.irPerfil = () => {
   window.location.href = "perfil.html";
 };
+
