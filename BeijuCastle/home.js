@@ -1,4 +1,6 @@
 import { auth } from "./firebase.js";
+import { salvarPedido } from "./pedidos.js";
+
 import {
   onAuthStateChanged,
   signOut
@@ -6,10 +8,12 @@ import {
 
 let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
 let desconto = 0;
+let usuarioAtual = null;
 
 // LOGIN CHECK
 onAuthStateChanged(auth, (user) => {
   if (user) {
+    usuarioAtual = user;
     document.getElementById("userEmail").textContent = "Logado: " + user.email;
     renderCarrinho();
   } else {
@@ -29,7 +33,7 @@ window.addCarrinho = (nome, preco) => {
   const itemExistente = carrinho.find(i => i.nome === nome);
 
   if (itemExistente) {
-    itemExistente.qtd += 1;
+    itemExistente.qtd++;
   } else {
     carrinho.push({ nome, preco, qtd: 1 });
   }
@@ -38,7 +42,7 @@ window.addCarrinho = (nome, preco) => {
   renderCarrinho();
 };
 
-// ALTERAR QUANTIDADE
+// ALTERAR QTD
 window.mudarQtd = (index, tipo) => {
   if (tipo === "mais") carrinho[index].qtd++;
   if (tipo === "menos") carrinho[index].qtd--;
@@ -53,7 +57,7 @@ window.mudarQtd = (index, tipo) => {
 
 // CUPOM
 window.aplicarCupom = () => {
-  const cupom = document.getElementById("cupom").value;
+  const cupom = document.getElementById("cupom").value.toUpperCase();
 
   if (cupom === "BEIJU10") {
     desconto = 0.1;
@@ -65,6 +69,12 @@ window.aplicarCupom = () => {
 
   renderCarrinho();
 };
+
+// CALCULAR ENTREGA
+function calcularEntrega(total) {
+  if (total >= 30) return 0;
+  return 5;
+}
 
 // RENDER
 function renderCarrinho() {
@@ -83,27 +93,62 @@ function renderCarrinho() {
       <button onclick="mudarQtd(${i}, 'mais')">+</button>
       <button onclick="mudarQtd(${i}, 'menos')">-</button>
     `;
+
     lista.appendChild(div);
   });
 
+  // DESCONTO
   total = total - (total * desconto);
 
-  totalEl.textContent = "Total: R$ " + total.toFixed(2);
+  // ENTREGA
+  const entrega = calcularEntrega(total);
+  total += entrega;
+
+  totalEl.textContent = `Total: R$ ${total.toFixed(2)} (Entrega: R$ ${entrega})`;
 }
 
-// FINALIZAR
+// FINALIZAR PEDIDO (🔥 AGORA COMPLETO)
 window.finalizarPedido = () => {
   if (carrinho.length === 0) {
     alert("Carrinho vazio!");
     return;
   }
 
-  alert("Pedido enviado!");
+  const total = calcularTotalFinal();
+
+  const pedido = {
+    id: Date.now(),
+    usuario: usuarioAtual.email,
+    itens: carrinho,
+    total: total,
+    status: "pendente",
+    data: new Date().toLocaleString()
+  };
+
+  salvarPedido(pedido);
+
+  alert("Pedido enviado com sucesso!");
+
   carrinho = [];
   desconto = 0;
+
   salvar();
   renderCarrinho();
 };
+
+// CALCULAR TOTAL FINAL
+function calcularTotalFinal() {
+  let total = 0;
+
+  carrinho.forEach(item => {
+    total += item.preco * item.qtd;
+  });
+
+  total = total - (total * desconto);
+  total += calcularEntrega(total);
+
+  return total;
+}
 
 // SALVAR
 function salvar() {
