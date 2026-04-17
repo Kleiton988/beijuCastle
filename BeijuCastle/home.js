@@ -154,3 +154,6 @@ function calcularTotalFinal() {
 function salvar() {
   localStorage.setItem("carrinho", JSON.stringify(carrinho));
 }
+window.irPerfil = () => {
+  window.location.href = "perfil.html";
+};
