@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Home</title>
+
+  <link rel="stylesheet" href="home.css">
+
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="home.js" defer></script>
+</head>
+
+<body class="home">
+
+  <header class="topo">
+    <h1>BeijúCastle 🫓</h1>
+    <p id="userEmail"></p>
+    <button id="logout">Sair</button>
+  </header>
+
+  <main class="cardapio">
+
+    <div class="item">
+      <h2>Beijú Tradicional</h2>
+      <span>R$ 5</span>
+      <button onclick="addCarrinho('Tradicional', 5)">Adicionar</button>
+    </div>
+
+    <div class="item">
+      <h2>Beijú Queijo</h2>
+      <span>R$ 7</span>
+      <button onclick="addCarrinho('Queijo', 7)">Adicionar</button>
+    </div>
+
+    <div class="item">
+      <h2>Beijú Doce</h2>
+      <span>R$ 8</span>
+      <button onclick="addCarrinho('Doce', 8)">Adicionar</button>
+    </div>
+
+  </main>
+
+  <aside class="carrinho">
+    <h2>Carrinho</h2>
+
+    <div id="listaCarrinho"></div>
+
+    <input type="text" id="cupom" placeholder="Cupom (ex: BEIJU10)">
+    <button onclick="aplicarCupom()">Aplicar Cupom</button>
+
+    <p id="total"></p>
+
+    <button onclick="finalizarPedido()">Finalizar Pedido</button>
+  </aside>
+
+</body>
+</html>

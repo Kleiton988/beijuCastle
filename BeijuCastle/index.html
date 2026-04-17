@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Firebase -->
+  <script type="module" src="firebase.js"></script>
+  <script type="module" src="script.js" defer></script>
+</head>
+
+<body>
+
+  <div class="container">
+    <div class="card">
+
+      <h1>Login</h1>
+      <p>Para utilizar o sistema, faça o login.</p>
+
+      <label for="loginEmail">Email:</label>
+      <input type="email" id="loginEmail" placeholder="Digite seu email">
+
+      <label for="loginSenha">Senha:</label>
+      <input type="password" id="loginSenha" placeholder="Digite sua senha">
+
+      <button id="btnLogin">Entrar</button>
+
+      <h2>Criar nova conta</h2>
+
+      <label for="cadastroEmail">Email:</label>
+      <input type="email" id="cadastroEmail" placeholder="Digite seu email">
+
+      <label for="cadastroSenha">Senha:</label>
+      <input type="password" id="cadastroSenha" placeholder="Crie uma senha">
+
+      <button id="btnCadastro">Cadastrar</button>
+
+      <!-- Mensagem de erro/sucesso -->
+      <p id="mensagem" style="margin-top:10px; font-size:14px;"></p>
+
+    </div>
+  </div>
+
+</body>
+</html>

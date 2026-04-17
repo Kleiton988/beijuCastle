@@ -1,0 +1,39 @@
+body.home {
+  background: url("img/back.jpg") no-repeat center center fixed;
+  background-size: cover;
+}
+
+.topo {
+  background: #2c4a7a;
+  color: white;
+  text-align: center;
+  padding: 10px;
+}
+
+.cardapio {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+}
+
+.item {
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+  text-align: center;
+}
+
+.carrinho {
+  position: fixed;
+  right: 10px;
+  top: 100px;
+  width: 250px;
+  background: white;
+  padding: 15px;
+  border-radius: 10px;
+}
+
+.carrinho button {
+  margin: 2px;
+}
