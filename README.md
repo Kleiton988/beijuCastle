@@ -1,1 +1,14 @@
 # beijuCastle
+
+Ah hei, ah hei, ah hei
+Ah ah, La Belle de Jour
+Ah hei, ah hei
+Eu lembro da moça bonita
+Da praia de Boa Viagem
+E a moça no meio da tarde
+De um domingo azul
+Azul era Belle de Jour
+Era a bela da tarde
+Seus olhos azuis como a tarde
+Na tarde de um domingo azul
+La Belle de Jour
