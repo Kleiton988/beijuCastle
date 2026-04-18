@@ -53,36 +53,57 @@ function carregarPedidos() {
 
   lista.innerHTML = "";
 
-  pedidos.reverse().forEach(p => {
-    const div = document.createElement("div");
+  // ORDENAR (mais recente primeiro)
+  pedidos.sort((a, b) => b.id - a.id);
 
-    // MONTAR ITENS
-    let itensHTML = "";
-    p.itens.forEach(item => {
-      itensHTML += `${item.nome} x${item.qtd} <br>`;
+  // SEPARAR POR STATUS
+  const pendentes = pedidos.filter(p => p.status === "pendente");
+  const preparando = pedidos.filter(p => p.status === "preparando");
+  const prontos = pedidos.filter(p => p.status === "pronto");
+  const cancelados = pedidos.filter(p => p.status === "cancelado");
+
+  // FUNÇÃO PRA RENDER GRUPO
+  function renderGrupo(titulo, listaPedidos) {
+    if (listaPedidos.length === 0) return;
+
+    const tituloEl = document.createElement("h3");
+    tituloEl.textContent = titulo;
+    lista.appendChild(tituloEl);
+
+    listaPedidos.forEach(p => {
+      const div = document.createElement("div");
+
+      let itensHTML = "";
+      p.itens.forEach(item => {
+        itensHTML += `${item.nome} x${item.qtd} <br>`;
+      });
+
+      const status = formatarStatus(p.status);
+
+      let botaoCancelar = "";
+      if (p.status === "pendente") {
+        botaoCancelar = `<button onclick="cancelar(${p.id})">Cancelar</button>`;
+      }
+
+      div.innerHTML = `
+        <strong>Pedido #${p.id}</strong> <br>
+        ${itensHTML}
+        Total: R$ ${p.total} <br>
+        Status: ${status} <br>
+        ${p.data} <br>
+        ${botaoCancelar}
+        <hr>
+      `;
+
+      lista.appendChild(div);
     });
+  }
 
-    // STATUS VISUAL
-    const status = formatarStatus(p.status);
-
-    // BOTÃO CANCELAR (REGRA)
-    let botaoCancelar = "";
-    if (p.status === "pendente") {
-      botaoCancelar = `<button onclick="cancelar(${p.id})">Cancelar</button>`;
-    }
-
-    div.innerHTML = `
-      <strong>Pedido #${p.id}</strong> <br>
-      ${itensHTML}
-      Total: R$ ${p.total} <br>
-      Status: ${status} <br>
-      ${p.data} <br>
-      ${botaoCancelar}
-      <hr>
-    `;
-
-    lista.appendChild(div);
-  });
+  //  ORDEM DOS GRUPOS
+  renderGrupo("🟡 Pendentes", pendentes);
+  renderGrupo("🔵 Em preparo", preparando);
+  renderGrupo("🟢 Prontos", prontos);
+  renderGrupo("🔴 Cancelados", cancelados);
 }
 window.cancelar = (id) => {
   cancelarPedido(id);
