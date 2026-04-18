@@ -1,6 +1,8 @@
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { listarPedidos, cancelarPedido } from "./pedidos.js";
+
+import { salvarUsuario, buscarUsuario } from "./usuarios.js";
+import { listarPedidos } from "./pedidos.js";
 
 let usuarioAtual = null;
 
@@ -8,55 +10,60 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioAtual = user;
 
-    document.getElementById("userEmail").textContent = user.email;
+    document.getElementById("email").textContent = "Email: " + user.email;
 
-    renderPedidos();
+    carregarPerfil();
+    carregarPedidos();
+
   } else {
     window.location.href = "index.html";
   }
 });
 
-// RENDER PEDIDOS
-function renderPedidos() {
-  const lista = document.getElementById("listaPedidos");
-  lista.innerHTML = "";
+// CARREGAR DADOS
+function carregarPerfil() {
+  const dados = buscarUsuario(usuarioAtual.email);
+
+  if (!dados) return;
+
+  document.getElementById("nome").value = dados.nome || "";
+  document.getElementById("telefone").value = dados.telefone || "";
+  document.getElementById("endereco").value = dados.endereco || "";
+}
+
+// SALVAR PERFIL
+window.salvarPerfil = () => {
+  const nome = document.getElementById("nome").value;
+  const telefone = document.getElementById("telefone").value;
+  const endereco = document.getElementById("endereco").value;
+
+  salvarUsuario(usuarioAtual.email, {
+    nome,
+    telefone,
+    endereco
+  });
+
+  alert("Perfil salvo!");
+};
+
+// LISTAR PEDIDOS
+function carregarPedidos() {
+  const lista = document.getElementById("pedidos");
 
   const pedidos = listarPedidos(usuarioAtual.email);
 
-  if (pedidos.length === 0) {
-    lista.innerHTML = "<p>Nenhum pedido encontrado.</p>";
-    return;
-  }
+  lista.innerHTML = "";
 
   pedidos.forEach(p => {
     const div = document.createElement("div");
 
     div.innerHTML = `
-      <p><b>ID:</b> ${p.id}</p>
-      <p><b>Status:</b> ${p.status}</p>
-      <p><b>Total:</b> R$ ${p.total}</p>
-      <p><b>Data:</b> ${p.data}</p>
-
-      ${
-        p.status === "pendente"
-          ? `<button onclick="cancelar(${p.id})">Cancelar</button>`
-          : ""
-      }
-
+      Pedido #${p.id} - ${p.status} - R$ ${p.total}
+      <br>
+      ${p.data}
       <hr>
     `;
 
     lista.appendChild(div);
   });
 }
-
-// CANCELAR
-window.cancelar = (id) => {
-  cancelarPedido(id);
-  renderPedidos();
-};
-
-// VOLTAR
-window.voltar = () => {
-  window.location.href = "home.html";
-};
