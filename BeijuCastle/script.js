@@ -19,6 +19,10 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
 
   try {
     await signInWithEmailAndPassword(auth, email, senha);
+    import("./usuarios.js").then(mod => {
+  const user = mod.buscarUsuario(email);
+  mod.setUsuarioAtual(user);
+});
     msg.textContent = "Login OK!";
     msg.style.color = "green";
 
@@ -51,6 +55,16 @@ document.getElementById("btnCadastro").addEventListener("click", async () => {
 
   try {
     await createUserWithEmailAndPassword(auth, email, senha);
+    // definir tipo de usuário
+const usuario = {
+  email: email,
+  role: email === "admin@gmail.com" ? "admin" : "user"
+};
+
+// salvar no sistema
+import("./usuarios.js").then(mod => {
+  mod.salvarUsuario(usuario);
+});
     msg.textContent = "Conta criada!";
     msg.style.color = "green";
 

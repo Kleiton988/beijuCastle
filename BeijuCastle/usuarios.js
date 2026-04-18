@@ -1,17 +1,9 @@
 const KEY = "usuarios";
 
-// SALVAR / ATUALIZAR USUÁRIO
-export function salvarUsuario(email, dados) {
-  let usuarios = JSON.parse(localStorage.getItem(KEY)) || [];
-
-  const index = usuarios.findIndex(u => u.email === email);
-
-  if (index !== -1) {
-    usuarios[index] = { ...usuarios[index], ...dados };
-  } else {
-    usuarios.push({ email, ...dados });
-  }
-
+// CRIAR USUÁRIO
+export function salvarUsuario(usuario) {
+  const usuarios = JSON.parse(localStorage.getItem(KEY)) || [];
+  usuarios.push(usuario);
   localStorage.setItem(KEY, JSON.stringify(usuarios));
 }
 
@@ -19,4 +11,14 @@ export function salvarUsuario(email, dados) {
 export function buscarUsuario(email) {
   const usuarios = JSON.parse(localStorage.getItem(KEY)) || [];
   return usuarios.find(u => u.email === email);
+}
+
+// DEFINIR USUÁRIO ATUAL
+export function setUsuarioAtual(usuario) {
+  localStorage.setItem("usuarioLogado", JSON.stringify(usuario));
+}
+
+// PEGAR USUÁRIO ATUAL
+export function getUsuarioAtual() {
+  return JSON.parse(localStorage.getItem("usuarioLogado"));
 }

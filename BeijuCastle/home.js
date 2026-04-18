@@ -1,6 +1,7 @@
 import { auth } from "./firebase.js";
 import { salvarPedido, atualizarStatusPedido } from "./pedidos.js";
 import { favoritarItem, listarFavoritos, removerFavorito } from "./favoritos.js";
+import { getUsuarioAtual } from "./usuarios.js";
 
 import {
   onAuthStateChanged,
@@ -13,6 +14,11 @@ let usuarioAtual = null;
 
 // ================= LOGIN =================
 onAuthStateChanged(auth, (user) => {
+  const usuario = getUsuarioAtual();
+
+if (usuario && usuario.role === "admin") {
+  document.getElementById("btnAdmin").style.display = "inline-block";
+}
   if (user) {
     usuarioAtual = user;
     document.getElementById("userEmail").textContent = "Logado: " + user.email;
@@ -25,6 +31,9 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // ================= LOGOUT =================
+document.getElementById("btnAdmin").addEventListener("click", () => {
+  window.location.href = "admin.html";
+});
 document.getElementById("logout").addEventListener("click", async () => {
   await signOut(auth);
   localStorage.removeItem("carrinho");
@@ -61,7 +70,7 @@ window.toggleFavorito = (nome, preco) => {
   renderFavoritos();
 };
 
-// 🔥 AGORA CORRETO (FORA DE OUTRA FUNÇÃO)
+//  AGORA CORRETO (FORA DE OUTRA FUNÇÃO)
 function renderFavoritos() {
   const container = document.getElementById("favoritos");
 
