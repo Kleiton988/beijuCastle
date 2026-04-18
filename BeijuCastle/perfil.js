@@ -2,7 +2,7 @@ import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 import { salvarUsuario, buscarUsuario } from "./usuarios.js";
-import { listarPedidos } from "./pedidos.js";
+import { listarPedidos, cancelarPedido } from "./pedidos.js";
 
 let usuarioAtual = null;
 
@@ -49,21 +49,59 @@ window.salvarPerfil = () => {
 // LISTAR PEDIDOS
 function carregarPedidos() {
   const lista = document.getElementById("pedidos");
-
   const pedidos = listarPedidos(usuarioAtual.email);
 
   lista.innerHTML = "";
 
-  pedidos.forEach(p => {
+  pedidos.reverse().forEach(p => {
     const div = document.createElement("div");
 
+    // MONTAR ITENS
+    let itensHTML = "";
+    p.itens.forEach(item => {
+      itensHTML += `${item.nome} x${item.qtd} <br>`;
+    });
+
+    // STATUS VISUAL
+    const status = formatarStatus(p.status);
+
+    // BOTÃO CANCELAR (REGRA)
+    let botaoCancelar = "";
+    if (p.status === "pendente") {
+      botaoCancelar = `<button onclick="cancelar(${p.id})">Cancelar</button>`;
+    }
+
     div.innerHTML = `
-      Pedido #${p.id} - ${p.status} - R$ ${p.total}
-      <br>
-      ${p.data}
+      <strong>Pedido #${p.id}</strong> <br>
+      ${itensHTML}
+      Total: R$ ${p.total} <br>
+      Status: ${status} <br>
+      ${p.data} <br>
+      ${botaoCancelar}
       <hr>
     `;
 
     lista.appendChild(div);
   });
+}
+window.cancelar = (id) => {
+  cancelarPedido(id);
+  alert("Pedido cancelado!");
+
+  carregarPedidos();
+};
+
+function formatarStatus(status) {
+  switch (status) {
+    case "pendente":
+      return "🟡 Pendente";
+    case "preparando":
+      return "🔵 Preparando";
+    case "pronto":
+      return "🟢 Pronto";
+    case "cancelado":
+      return "🔴 Cancelado";
+    default:
+      return status;
+  }
 }
