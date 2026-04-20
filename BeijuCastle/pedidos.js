@@ -1,20 +1,20 @@
 const KEY = "pedidos";
 
 // SALVAR
-export function salvarPedido(pedido) {
+ function salvarPedido(pedido) {
   const pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
   pedidos.push(pedido);
   localStorage.setItem(KEY, JSON.stringify(pedidos));
 }
 
 // LISTAR
-export function listarPedidos(usuario) {
+function listarPedidos(usuario) {
   const pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
   return pedidos.filter(p => p.usuario === usuario);
 }
 
 // ATUALIZAR STATUS
-export function atualizarStatusPedido(id, novoStatus) {
+ function atualizarStatusPedido(id, novoStatus) {
   const pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
 
   const pedido = pedidos.find(p => p.id === id);
@@ -26,7 +26,7 @@ export function atualizarStatusPedido(id, novoStatus) {
 }
 
 // CANCELAR
-export function cancelarPedido(id) {
+function cancelarPedido(id) {
   let pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
 
   pedidos = pedidos.map(p => {
@@ -38,3 +38,9 @@ export function cancelarPedido(id) {
 
   localStorage.setItem(KEY, JSON.stringify(pedidos));
 }
+module.exports = {
+  salvarPedido,
+  listarPedidos,
+  atualizarStatusPedido,
+  cancelarPedido
+};
