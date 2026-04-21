@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/Kleiton988/beijuCastle#readme",
   "dependencies": {
-    "jest": "^30.3.0"
+    "jest": "^30.3.0",
+    "jest-environment-jsdom": "^30.3.0"
   }
 }
