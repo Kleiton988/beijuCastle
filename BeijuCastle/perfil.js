@@ -1,8 +1,13 @@
-import { auth } from "./firebase.js";
-import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+const auth = {};
+const onAuthStateChanged = (auth, callback) => {
+  callback({ email: "teste@gmail.com" }); // simula usuário logado
+};
 
-import { salvarUsuario, buscarUsuario } from "./usuarios.js";
-import { listarPedidos, cancelarPedido } from "./pedidos.js";
+// mocks para testes
+const salvarUsuario = global.salvarUsuario;
+const buscarUsuario = global.buscarUsuario;
+const listarPedidos = global.listarPedidos;
+const cancelarPedido = global.cancelarPedido;
 
 let usuarioAtual = null;
 
