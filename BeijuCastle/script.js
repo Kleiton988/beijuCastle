@@ -1,75 +1,83 @@
-import { auth } from "./firebase.js";
-import {
-  signInWithEmailAndPassword,
-  createUserWithEmailAndPassword
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+// 🔴 MUDANÇA 1: trocar import por require
+const { auth } = require("./firebase.js");
+
+// ❌ REMOVER ISSO (era o problema)
+// const signInWithEmailAndPassword = global.signInWithEmailAndPassword;
+// const createUserWithEmailAndPassword = global.createUserWithEmailAndPassword;
 
 const msg = document.getElementById("mensagem");
 
+// ===============================
 // LOGIN
-document.getElementById("btnLogin").addEventListener("click", async () => {
-  const email = document.getElementById("loginEmail").value;
-  const senha = document.getElementById("loginSenha").value;
+// ===============================
+const btnLogin = document.getElementById("btnLogin");
 
-  if (!email || !senha) {
-    msg.textContent = "Preencha todos os campos!";
-    msg.style.color = "red";
-    return;
-  }
+if (btnLogin) {
+  btnLogin.addEventListener("click", async () => {
+    const email = document.getElementById("loginEmail").value;
+    const senha = document.getElementById("loginSenha").value;
 
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    import("./usuarios.js").then(mod => {
-  const user = mod.buscarUsuario(email);
-  mod.setUsuarioAtual(user);
-});
-    msg.textContent = "Login OK!";
-    msg.style.color = "green";
+    if (!email || !senha) {
+      msg.textContent = "Preencha todos os campos!";
+      msg.style.color = "red";
+      return;
+    }
 
-    setTimeout(() => {
-      window.location.href = "home.html";
-    }, 1000);
+    try {
+      // 🔴 MUDANÇA 2: usar direto do global
+      await global.signInWithEmailAndPassword(auth, email, senha);
 
-  } catch {
-    msg.textContent = "Email ou senha inválidos!";
-    msg.style.color = "red";
-  }
-});
+      msg.textContent = "Login OK!";
+      msg.style.color = "green";
 
+      setTimeout(() => {
+        window.location.href = "home.html";
+      }, 1000);
+
+    } catch {
+      msg.textContent = "Email ou senha inválidos!";
+      msg.style.color = "red";
+    }
+  });
+}
+
+// ===============================
 // CADASTRO
-document.getElementById("btnCadastro").addEventListener("click", async () => {
-  const email = document.getElementById("cadastroEmail").value;
-  const senha = document.getElementById("cadastroSenha").value;
+// ===============================
+const btnCadastro = document.getElementById("btnCadastro");
 
-  if (!email || !senha) {
-    msg.textContent = "Preencha todos os campos!";
-    msg.style.color = "red";
-    return;
-  }
+if (btnCadastro) {
+  btnCadastro.addEventListener("click", async () => {
+    const email = document.getElementById("cadastroEmail").value;
+    const senha = document.getElementById("cadastroSenha").value;
 
-  if (senha.length < 6) {
-    msg.textContent = "Senha deve ter no mínimo 6 caracteres!";
-    msg.style.color = "red";
-    return;
-  }
+    if (!email || !senha) {
+      msg.textContent = "Preencha todos os campos!";
+      msg.style.color = "red";
+      return;
+    }
 
-  try {
-    await createUserWithEmailAndPassword(auth, email, senha);
-    // definir tipo de usuário
-const usuario = {
-  email: email,
-  role: email === "admin@gmail.com" ? "admin" : "user"
-};
+    if (senha.length < 6) {
+      msg.textContent = "Senha deve ter no mínimo 6 caracteres!";
+      msg.style.color = "red";
+      return;
+    }
 
-// salvar no sistema
-import("./usuarios.js").then(mod => {
-  mod.salvarUsuario(usuario);
-});
-    msg.textContent = "Conta criada!";
-    msg.style.color = "green";
+    try {
+      // 🔴 MUDANÇA 3: usar direto do global
+      await global.createUserWithEmailAndPassword(auth, email, senha);
 
-  } catch (e) {
-    msg.textContent = e.message;
-    msg.style.color = "red";
-  }
-});
+      const usuario = {
+        email: email,
+        role: email === "admin@gmail.com" ? "admin" : "user"
+      };
+
+      msg.textContent = "Conta criada!";
+      msg.style.color = "green";
+
+    } catch (e) {
+      msg.textContent = e.message;
+      msg.style.color = "red";
+    }
+  });
+}
