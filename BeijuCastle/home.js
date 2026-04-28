@@ -1,5 +1,5 @@
 import { auth } from "./firebase.js";
-import { salvarPedido, atualizarStatusPedido } from "./pedidos.js";
+import { salvarPedido } from "./pedidos.js";
 import { favoritarItem, listarFavoritos, removerFavorito } from "./favoritos.js";
 import { getUsuarioAtual } from "./usuarios.js";
 
@@ -8,122 +8,181 @@ import {
   signOut
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-let carrinho = JSON.parse(localStorage.getItem("carrinho")) || [];
-let desconto = 0;
-let usuarioAtual = null;
+// ================= ESTADO =================
+const state = {
+  carrinho: JSON.parse(localStorage.getItem("carrinho")) || [],
+  usuario: null,
+  cupom: {
+    codigo: null,
+    desconto: 0,
+    aplicado: false
+  }
+};
 
-// ================= LOGIN =================
+// ================= CUPONS =================
+const CUPONS = {
+  "BEIJU10": { desconto: 0.1, minimo: 20 },
+  "PROMO20": { desconto: 0.2, minimo: 40 }
+};
+
+// ================= INIT =================
 onAuthStateChanged(auth, (user) => {
   const usuario = getUsuarioAtual();
 
-if (usuario && usuario.role === "admin") {
-  document.getElementById("btnAdmin").style.display = "inline-block";
-}
-  if (user) {
-    usuarioAtual = user;
-    document.getElementById("userEmail").textContent = "Logado: " + user.email;
+  if (usuario && usuario.role === "admin") {
+    document.getElementById("btnAdmin").style.display = "inline-block";
+  }
 
-    renderCarrinho();
-    renderFavoritos();
+  if (user) {
+    state.usuario = user;
+    document.getElementById("userEmail").textContent = "Logado: " + user.email;
+    renderAll();
   } else {
     window.location.href = "index.html";
   }
 });
 
 // ================= LOGOUT =================
-document.getElementById("btnAdmin").addEventListener("click", () => {
-  window.location.href = "admin.html";
-});
 document.getElementById("logout").addEventListener("click", async () => {
   await signOut(auth);
   localStorage.removeItem("carrinho");
   window.location.href = "index.html";
 });
 
+// ================= HELPERS =================
+function salvarCarrinho() {
+  localStorage.setItem("carrinho", JSON.stringify(state.carrinho));
+}
+
+function calcularSubtotal() {
+  return state.carrinho.reduce((t, i) => t + i.preco * i.qtd, 0);
+}
+
+function calcularEntrega(subtotal) {
+  return subtotal >= 30 ? 0 : 5;
+}
+
+function calcularResumo() {
+  const subtotal = calcularSubtotal();
+  const descontoValor = subtotal * state.cupom.desconto;
+  const total = subtotal - descontoValor + calcularEntrega(subtotal);
+
+  return { subtotal, descontoValor, total };
+}
+
 // ================= CARRINHO =================
 window.addCarrinho = (nome, preco) => {
-  const itemExistente = carrinho.find(i => i.nome === nome);
+  const item = state.carrinho.find(i => i.nome === nome);
 
-  if (itemExistente) {
-    itemExistente.qtd++;
-  } else {
-    carrinho.push({ nome, preco, qtd: 1 });
-  }
+  if (item) item.qtd++;
+  else state.carrinho.push({ nome, preco, qtd: 1 });
 
-  salvar();
+  salvarCarrinho();
   renderCarrinho();
 };
 
-// ================= FAVORITOS =================
-window.toggleFavorito = (nome, preco) => {
-  const favoritos = listarFavoritos();
-  const existe = favoritos.find(f => f.nome === nome);
+window.mudarQtd = (i, tipo) => {
+  const item = state.carrinho[i];
+  if (!item) return;
 
-  if (existe) {
-    removerFavorito(nome);
-    alert("Removido dos favoritos");
-  } else {
-    favoritarItem({ nome, preco });
-    alert("Adicionado aos favoritos ⭐");
-  }
+  tipo === "mais" ? item.qtd++ : item.qtd--;
 
-  renderFavoritos();
-};
+  if (item.qtd <= 0) state.carrinho.splice(i, 1);
 
-//  AGORA CORRETO (FORA DE OUTRA FUNÇÃO)
-function renderFavoritos() {
-  const container = document.getElementById("favoritos");
-
-  if (!container) return;
-
-  container.innerHTML = "";
-
-  const favoritos = listarFavoritos();
-
-  favoritos.forEach(item => {
-    const div = document.createElement("div");
-
-    div.innerHTML = `
-      ${item.nome} - R$ ${item.preco}
-      <button onclick="addCarrinho('${item.nome}', ${item.preco})">Comprar</button>
-    `;
-
-    container.appendChild(div);
-  });
-}
-
-// ================= QTD =================
-window.mudarQtd = (index, tipo) => {
-  if (tipo === "mais") carrinho[index].qtd++;
-  if (tipo === "menos") carrinho[index].qtd--;
-
-  if (carrinho[index].qtd <= 0) {
-    carrinho.splice(index, 1);
-  }
-
-  salvar();
+  salvarCarrinho();
   renderCarrinho();
 };
 
 // ================= CUPOM =================
 window.aplicarCupom = () => {
-  const cupom = document.getElementById("cupom").value.toUpperCase();
+  const input = document.getElementById("cupom");
+  const codigo = input.value.trim().toUpperCase();
 
-  if (cupom === "BEIJU10") {
-    desconto = 0.1;
-    alert("Cupom aplicado! 10% OFF");
-  } else {
-    desconto = 0;
-    alert("Cupom inválido!");
+  if (state.carrinho.length === 0) {
+    return mostrarMensagem("Adicione itens antes do cupom", "erro");
   }
 
+  if (!CUPONS[codigo]) {
+    return mostrarMensagem("Cupom inválido", "erro");
+  }
+
+  const subtotal = calcularSubtotal();
+
+  if (subtotal < CUPONS[codigo].minimo) {
+    return mostrarMensagem("Valor mínimo não atingido", "erro");
+  }
+
+  if (state.cupom.aplicado) {
+    return mostrarMensagem("Cupom já aplicado", "erro");
+  }
+
+  state.cupom = {
+    codigo,
+    desconto: CUPONS[codigo].desconto,
+    aplicado: true
+  };
+
+  mostrarMensagem("Cupom aplicado!", "sucesso");
   renderCarrinho();
 };
 
-// ================= ENTREGA =================
-function calcularEntrega(total) {
-  return total >= 30 ? 0 : 5;
-}
+window.removerCupom = () => {
+  state.cupom = { codigo: null, desconto: 0, aplicado: false };
+  mostrarMensagem("Cupom removido", "sucesso");
+  renderCarrinho();
+};
+
+// ================= FINALIZAR =================
+window.finalizarPedido = () => {
+  if (state.carrinho.length === 0) {
+    return mostrarMensagem("Carrinho vazio", "erro");
+  }
+
+  if (!state.usuario) {
+    return mostrarMensagem("Usuário não autenticado", "erro");
+  }
+
+  const resumo = calcularResumo();
+
+  const pedido = {
+    id: Date.now(),
+    usuario: state.usuario.email,
+    itens: [...state.carrinho],
+    subtotal: resumo.subtotal,
+    desconto: resumo.descontoValor,
+    total: resumo.total,
+    cupom: state.cupom.codigo,
+    status: "pendente",
+    data: new Date().toLocaleString()
+  };
+
+  salvarPedido(pedido);
+
+  mostrarMensagem("Pedido finalizado!", "sucesso");
+
+  state.carrinho = [];
+  state.cupom = { codigo: null, desconto: 0, aplicado: false };
+
+  document.getElementById("cupom").value = "";
+
+  salvarCarrinho();
+  renderAll();
+};
+
+// ================= FAVORITOS =================
+window.toggleFavorito = (nome, preco) => {
+  const existe = listarFavoritos().find(f => f.nome === nome);
+
+  if (existe) {
+    removerFavorito(nome);
+    mostrarMensagem("Removido dos favoritos");
+  } else {
+    favoritarItem({ nome, preco });
+    mostrarMensagem("Adicionado aos favoritos");
+  }
+
+  renderFavoritos();
+};
 
 // ================= RENDER =================
 function renderCarrinho() {
@@ -131,14 +190,12 @@ function renderCarrinho() {
   const totalEl = document.getElementById("total");
 
   lista.innerHTML = "";
-  let total = 0;
 
-  carrinho.forEach((item, i) => {
-    total += item.preco * item.qtd;
-
+  state.carrinho.forEach((item, i) => {
     const div = document.createElement("div");
+
     div.innerHTML = `
-      ${item.nome} (x${item.qtd}) - R$ ${item.preco * item.qtd}
+      ${item.nome} (x${item.qtd}) - R$ ${(item.preco * item.qtd).toFixed(2)}
       <button onclick="mudarQtd(${i}, 'mais')">+</button>
       <button onclick="mudarQtd(${i}, 'menos')">-</button>
     `;
@@ -146,72 +203,40 @@ function renderCarrinho() {
     lista.appendChild(div);
   });
 
-  total = total - (total * desconto);
+  const r = calcularResumo();
 
-  const entrega = calcularEntrega(total);
-  total += entrega;
-
-  totalEl.textContent = `Total: R$ ${total.toFixed(2)} (Entrega: R$ ${entrega})`;
+  totalEl.textContent = `Total: R$ ${r.total.toFixed(2)}`;
 }
 
-// ================= FINALIZAR =================
-window.finalizarPedido = () => {
-  if (carrinho.length === 0) {
-    alert("Carrinho vazio!");
-    return;
-  }
+function renderFavoritos() {
+  const c = document.getElementById("favoritos");
+  if (!c) return;
 
-  const total = calcularTotalFinal();
+  c.innerHTML = "";
 
-  const pedido = {
-    id: Date.now(),
-    usuario: usuarioAtual.email,
-    itens: carrinho,
-    total: total,
-    status: "pendente",
-    data: new Date().toLocaleString()
-  };
-
-  salvarPedido(pedido);
-
-  setTimeout(() => {
-    atualizarStatusPedido(pedido.id, "preparando");
-  }, 3000);
-
-  setTimeout(() => {
-    atualizarStatusPedido(pedido.id, "pronto");
-  }, 7000);
-
-  alert("Pedido enviado!");
-
-  carrinho = [];
-  desconto = 0;
-
-  salvar();
-  renderCarrinho();
-};
-
-// ================= TOTAL =================
-function calcularTotalFinal() {
-  let total = 0;
-
-  carrinho.forEach(item => {
-    total += item.preco * item.qtd;
+  listarFavoritos().forEach(i => {
+    c.innerHTML += `${i.nome} - R$ ${i.preco}`;
   });
-
-  total = total - (total * desconto);
-  total += calcularEntrega(total);
-
-  return total;
 }
 
-// ================= STORAGE =================
-function salvar() {
-  localStorage.setItem("carrinho", JSON.stringify(carrinho));
+function renderAll() {
+  renderCarrinho();
+  renderFavoritos();
 }
 
-// ================= PERFIL =================
-window.irPerfil = () => {
-  window.location.href = "perfil.html";
-};
+// ================= UI =================
+function mostrarMensagem(texto, tipo = "normal") {
+  const msg = document.getElementById("mensagemSistema");
+  if (!msg) return;
 
+  msg.textContent = texto;
+
+  msg.style.background =
+    tipo === "erro" ? "#e74c3c" :
+    tipo === "sucesso" ? "#2ecc71" :
+    "#333";
+
+  msg.style.display = "block";
+
+  setTimeout(() => msg.style.display = "none", 3000);
+}

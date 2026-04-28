@@ -1,11 +1,12 @@
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
-import { salvarUsuario, buscarUsuario } from "./usuarios.js";
-import { listarPedidos, cancelarPedido } from "./pedidos.js";
+import { buscarUsuario, atualizarUsuario } from "./usuarios.js";
+import { listarPedidosPorUsuario, cancelarPedido } from "./pedidos.js";
 
 let usuarioAtual = null;
 
+// ================= INIT =================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioAtual = user;
@@ -20,7 +21,7 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// CARREGAR DADOS
+// ================= PERFIL =================
 function carregarPerfil() {
   const dados = buscarUsuario(usuarioAtual.email);
 
@@ -31,98 +32,83 @@ function carregarPerfil() {
   document.getElementById("endereco").value = dados.endereco || "";
 }
 
-// SALVAR PERFIL
 window.salvarPerfil = () => {
-  const nome = document.getElementById("nome").value;
-  const telefone = document.getElementById("telefone").value;
-  const endereco = document.getElementById("endereco").value;
+  const nome = document.getElementById("nome").value.trim();
+  const telefone = document.getElementById("telefone").value.trim();
+  const endereco = document.getElementById("endereco").value.trim();
 
-  salvarUsuario(usuarioAtual.email, {
+  if (!nome) {
+    return mostrarMsg("Nome obrigatório", "erro");
+  }
+
+  atualizarUsuario(usuarioAtual.email, {
     nome,
     telefone,
     endereco
   });
 
-  alert("Perfil salvo!");
+  mostrarMsg("Perfil atualizado!", "sucesso");
 };
 
-// LISTAR PEDIDOS
+// ================= PEDIDOS =================
 function carregarPedidos() {
   const lista = document.getElementById("pedidos");
-  const pedidos = listarPedidos(usuarioAtual.email);
+  const pedidos = listarPedidosPorUsuario(usuarioAtual.email);
 
   lista.innerHTML = "";
 
-  // ORDENAR (mais recente primeiro)
-  pedidos.sort((a, b) => b.id - a.id);
-
-  // SEPARAR POR STATUS
-  const pendentes = pedidos.filter(p => p.status === "pendente");
-  const preparando = pedidos.filter(p => p.status === "preparando");
-  const prontos = pedidos.filter(p => p.status === "pronto");
-  const cancelados = pedidos.filter(p => p.status === "cancelado");
-
-  // FUNÇÃO PRA RENDER GRUPO
-  function renderGrupo(titulo, listaPedidos) {
-    if (listaPedidos.length === 0) return;
-
-    const tituloEl = document.createElement("h3");
-    tituloEl.textContent = titulo;
-    lista.appendChild(tituloEl);
-
-    listaPedidos.forEach(p => {
-      const div = document.createElement("div");
-
-      let itensHTML = "";
-      p.itens.forEach(item => {
-        itensHTML += `${item.nome} x${item.qtd} <br>`;
-      });
-
-      const status = formatarStatus(p.status);
-
-      let botaoCancelar = "";
-      if (p.status === "pendente") {
-        botaoCancelar = `<button onclick="cancelar(${p.id})">Cancelar</button>`;
-      }
-
-      div.innerHTML = `
-        <strong>Pedido #${p.id}</strong> <br>
-        ${itensHTML}
-        Total: R$ ${p.total} <br>
-        Status: ${status} <br>
-        ${p.data} <br>
-        ${botaoCancelar}
-        <hr>
-      `;
-
-      lista.appendChild(div);
-    });
+  if (pedidos.length === 0) {
+    lista.innerHTML = "<p>Nenhum pedido encontrado</p>";
+    return;
   }
 
-  //  ORDEM DOS GRUPOS
-  renderGrupo("🟡 Pendentes", pendentes);
-  renderGrupo("🔵 Em preparo", preparando);
-  renderGrupo("🟢 Prontos", prontos);
-  renderGrupo("🔴 Cancelados", cancelados);
+  pedidos.sort((a, b) => b.id - a.id);
+
+  pedidos.forEach(p => {
+    const div = document.createElement("div");
+
+    let itens = "";
+    p.itens.forEach(i => {
+      itens += `${i.nome} x${i.qtd}<br>`;
+    });
+
+    const podeCancelar = p.status === "pendente";
+
+    div.innerHTML = `
+      <strong>Pedido #${p.id}</strong><br>
+      ${itens}
+      Total: R$ ${p.total}<br>
+      Status: ${p.status}<br>
+      ${p.data}<br>
+      ${podeCancelar ? `<button onclick="cancelar(${p.id})">Cancelar</button>` : ""}
+      <hr>
+    `;
+
+    lista.appendChild(div);
+  });
 }
+
+// ================= CANCELAR =================
 window.cancelar = (id) => {
   cancelarPedido(id);
-  alert("Pedido cancelado!");
-
+  mostrarMsg("Pedido cancelado!", "sucesso");
   carregarPedidos();
 };
 
-function formatarStatus(status) {
-  switch (status) {
-    case "pendente":
-      return "🟡 Pendente";
-    case "preparando":
-      return "🔵 Preparando";
-    case "pronto":
-      return "🟢 Pronto";
-    case "cancelado":
-      return "🔴 Cancelado";
-    default:
-      return status;
-  }
+// ================= UI =================
+function mostrarMsg(texto, tipo = "normal") {
+  const msg = document.getElementById("msg");
+
+  msg.textContent = texto;
+
+  msg.style.background =
+    tipo === "erro" ? "#e74c3c" :
+    tipo === "sucesso" ? "#2ecc71" :
+    "#333";
+
+  msg.style.display = "block";
+
+  setTimeout(() => {
+    msg.style.display = "none";
+  }, 3000);
 }

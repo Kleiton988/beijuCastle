@@ -1,18 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Perfil</title>
+</head>
+
 <body>
 
-<h1>Perfil</h1>
+<h2 id="email"></h2>
 
-<p id="email"></p>
-
-<input type="text" id="nome" placeholder="Nome completo">
-<input type="text" id="telefone" placeholder="Telefone">
-<input type="text" id="endereco" placeholder="Endereço">
+<h3>Dados do usuário</h3>
+<input id="nome" placeholder="Nome">
+<input id="telefone" placeholder="Telefone">
+<input id="endereco" placeholder="Endereço">
 
 <button onclick="salvarPerfil()">Salvar</button>
 
-<h2>Pedidos</h2>
+<h3>📦 Meus Pedidos</h3>
 <div id="pedidos"></div>
+
+<!-- mensagem -->
+<div id="msg" style="
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #333;
+  color: white;
+  padding: 10px;
+  display: none;
+"></div>
 
 <script type="module" src="perfil.js"></script>
 
 </body>
+</html>

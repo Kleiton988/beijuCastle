@@ -1,24 +1,30 @@
 body {
   font-family: Arial;
-  background: #eee;
+  background: #f4f4f4;
   margin: 0;
 }
 
 header {
-  background: #111;
+  background: #333;
   color: white;
   padding: 15px;
   display: flex;
   justify-content: space-between;
 }
 
-section {
+#listaFavoritos {
   padding: 20px;
 }
 
-.pedido {
+.item {
   background: white;
   padding: 10px;
   margin-bottom: 10px;
   border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+}
+
+button {
+  cursor: pointer;
 }

@@ -3,17 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <title>Admin</title>
-  <script type="module" src="admin.js" defer></script>
+  <link rel="stylesheet" href="admin.css">
 </head>
 
 <body>
 
-<h1>Painel Admin</h1>
+<header>
+  <h1>Painel Admin</h1>
+  <button onclick="voltar()">Voltar</button>
+</header>
 
-<h2>Pedidos</h2>
-<div id="listaPedidos"></div>
+<main>
 
-<button onclick="voltar()">Voltar</button>
+  <section>
+    <h2>📦 Pedidos</h2>
+    <div id="listaPedidos"></div>
+  </section>
+
+</main>
+
+<script type="module" src="admin.js"></script>
 
 </body>
 </html>

@@ -1,40 +1,44 @@
 const KEY = "pedidos";
 
-// SALVAR
+// ================= SALVAR =================
 export function salvarPedido(pedido) {
   const pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
+
   pedidos.push(pedido);
+
   localStorage.setItem(KEY, JSON.stringify(pedidos));
 }
 
-// LISTAR
-export function listarPedidos(usuario) {
-  const pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
-  return pedidos.filter(p => p.usuario === usuario);
+// ================= LISTAR TODOS =================
+export function listarPedidos() {
+  return JSON.parse(localStorage.getItem(KEY)) || [];
 }
 
-// ATUALIZAR STATUS
+// ================= LISTAR POR USUÁRIO =================
+export function listarPedidosPorUsuario(email) {
+  const pedidos = listarPedidos();
+
+  return pedidos.filter(p => p.usuario === email);
+}
+
+// ================= ATUALIZAR STATUS =================
 export function atualizarStatusPedido(id, novoStatus) {
-  const pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
+  const pedidos = listarPedidos();
 
-  const pedido = pedidos.find(p => p.id === id);
-  if (pedido) {
-    pedido.status = novoStatus;
+  const index = pedidos.findIndex(p => p.id === id);
+
+  if (index !== -1) {
+    pedidos[index].status = novoStatus;
+    localStorage.setItem(KEY, JSON.stringify(pedidos));
   }
-
-  localStorage.setItem(KEY, JSON.stringify(pedidos));
 }
-
-// CANCELAR
 export function cancelarPedido(id) {
-  let pedidos = JSON.parse(localStorage.getItem(KEY)) || [];
+  const pedidos = listarPedidos();
 
-  pedidos = pedidos.map(p => {
-    if (p.id === id && p.status === "pendente") {
-      p.status = "cancelado";
-    }
-    return p;
-  });
+  const index = pedidos.findIndex(p => p.id === id);
 
-  localStorage.setItem(KEY, JSON.stringify(pedidos));
+  if (index !== -1) {
+    pedidos[index].status = "cancelado";
+    localStorage.setItem("pedidos", JSON.stringify(pedidos));
+  }
 }
