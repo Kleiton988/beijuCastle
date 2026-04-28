@@ -1,24 +1,87 @@
 const KEY = "usuarios";
+const USER_LOGADO = "usuarioLogado";
 
-// CRIAR USUÁRIO
-export function salvarUsuario(usuario) {
-  const usuarios = JSON.parse(localStorage.getItem(KEY)) || [];
-  usuarios.push(usuario);
+// ================= UTILS =================
+function getUsuarios() {
+  try {
+    return JSON.parse(localStorage.getItem(KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function salvarLista(usuarios) {
   localStorage.setItem(KEY, JSON.stringify(usuarios));
 }
 
-// BUSCAR USUÁRIO
+// ================= CRIAR USUÁRIO =================
+export function salvarUsuario(usuario) {
+  if (!usuario || !usuario.email) {
+    throw new Error("Usuário inválido");
+  }
+
+  const usuarios = getUsuarios();
+
+  const existe = usuarios.find(u => u.email === usuario.email);
+
+  if (existe) {
+    throw new Error("Usuário já existe");
+  }
+
+  usuarios.push({
+    email: usuario.email,
+    role: usuario.role || "user"
+  });
+
+  salvarLista(usuarios);
+}
+
+// ================= BUSCAR =================
 export function buscarUsuario(email) {
-  const usuarios = JSON.parse(localStorage.getItem(KEY)) || [];
-  return usuarios.find(u => u.email === email);
+  if (!email) return null;
+
+  const usuarios = getUsuarios();
+  return usuarios.find(u => u.email === email) || null;
 }
 
-// DEFINIR USUÁRIO ATUAL
+// ================= ATUALIZAR =================
+export function atualizarUsuario(email, novosDados) {
+  const usuarios = getUsuarios();
+
+  const index = usuarios.findIndex(u => u.email === email);
+
+  if (index === -1) return false;
+
+  usuarios[index] = { ...usuarios[index], ...novosDados };
+
+  salvarLista(usuarios);
+  return true;
+}
+
+// ================= REMOVER =================
+export function removerUsuario(email) {
+  let usuarios = getUsuarios();
+
+  usuarios = usuarios.filter(u => u.email !== email);
+
+  salvarLista(usuarios);
+}
+
+// ================= USUÁRIO ATUAL =================
 export function setUsuarioAtual(usuario) {
-  localStorage.setItem("usuarioLogado", JSON.stringify(usuario));
+  if (!usuario) return;
+
+  localStorage.setItem(USER_LOGADO, JSON.stringify(usuario));
 }
 
-// PEGAR USUÁRIO ATUAL
 export function getUsuarioAtual() {
-  return JSON.parse(localStorage.getItem("usuarioLogado"));
+  try {
+    return JSON.parse(localStorage.getItem(USER_LOGADO));
+  } catch {
+    return null;
+  }
+}
+
+export function logoutUsuario() {
+  localStorage.removeItem(USER_LOGADO);
 }
