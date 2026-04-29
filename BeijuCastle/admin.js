@@ -29,13 +29,13 @@ function renderPedidos() {
     div.className = "pedido";
 
     div.innerHTML = `
-      <p><strong>ID:</strong> ${p.id}</p>
-      <p><strong>Cliente:</strong> ${p.usuario}</p>
-      <p><strong>Total:</strong> R$ ${p.total}</p>
-      <p><strong>Status:</strong> ${p.status}</p>
+       <p><strong>ID:</strong> ${p.id}</p>
+       <p><strong>Cliente:</strong> ${p.usuario}</p>
+       <p><strong>Total:</strong> R$ ${p.total}</p>
+       <p><strong>Status:</strong> ${p.status}</p>
 
-      <button onclick="mudarStatus(${p.id}, 'preparando')">Preparando</button>
-      <button onclick="mudarStatus(${p.id}, 'pronto')">Pronto</button>
+       <button onclick="mudarStatus(${p.id}, 'preparando')">Preparando</button>
+       <button onclick="mudarStatus(${p.id}, 'pronto')">Pronto</button>
     `;
 
     container.appendChild(div);

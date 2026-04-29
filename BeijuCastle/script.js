@@ -19,17 +19,25 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
 
   try {
     await signInWithEmailAndPassword(auth, email, senha);
+
+    // Sincroniza localStorage: cria usuário se não existir
     import("./usuarios.js").then(mod => {
-  const user = mod.buscarUsuario(email);
-  mod.setUsuarioAtual(user);
-});
+      let user = mod.buscarUsuario(email);
+      if (!user) {
+        user = {
+          email: email,
+          role: email === "admin@gmail.com" ? "admin" : "user"
+        };
+        mod.salvarUsuario(user);
+      }
+      mod.setUsuarioAtual(user);
+    });
+
     msg.textContent = "Login OK!";
     msg.style.color = "green";
-
     setTimeout(() => {
       window.location.href = "home.html";
     }, 1000);
-
   } catch {
     msg.textContent = "Email ou senha inválidos!";
     msg.style.color = "red";
@@ -55,19 +63,22 @@ document.getElementById("btnCadastro").addEventListener("click", async () => {
 
   try {
     await createUserWithEmailAndPassword(auth, email, senha);
-    // definir tipo de usuário
-const usuario = {
-  email: email,
-  role: email === "admin@gmail.com" ? "admin" : "user"
-};
 
-// salvar no sistema
-import("./usuarios.js").then(mod => {
-  mod.salvarUsuario(usuario);
-});
+    const usuario = {
+      email: email,
+      role: email === "admin@gmail.com" ? "admin" : "user"
+    };
+
+    import("./usuarios.js").then(mod => {
+      let user = mod.buscarUsuario(email);
+      if (!user) {
+        mod.salvarUsuario(usuario);
+      }
+      mod.setUsuarioAtual(usuario);
+    });
+
     msg.textContent = "Conta criada!";
     msg.style.color = "green";
-
   } catch (e) {
     msg.textContent = e.message;
     msg.style.color = "red";

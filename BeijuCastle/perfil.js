@@ -10,12 +10,9 @@ let usuarioAtual = null;
 onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioAtual = user;
-
     document.getElementById("email").textContent = "Email: " + user.email;
-
     carregarPerfil();
     carregarPedidos();
-
   } else {
     window.location.href = "index.html";
   }
@@ -24,7 +21,6 @@ onAuthStateChanged(auth, (user) => {
 // ================= PERFIL =================
 function carregarPerfil() {
   const dados = buscarUsuario(usuarioAtual.email);
-
   if (!dados) return;
 
   document.getElementById("nome").value = dados.nome || "";
@@ -75,13 +71,13 @@ function carregarPedidos() {
     const podeCancelar = p.status === "pendente";
 
     div.innerHTML = `
-      <strong>Pedido #${p.id}</strong><br>
-      ${itens}
-      Total: R$ ${p.total}<br>
-      Status: ${p.status}<br>
-      ${p.data}<br>
-      ${podeCancelar ? `<button onclick="cancelar(${p.id})">Cancelar</button>` : ""}
-      <hr>
+       <strong>Pedido #${p.id}</strong><br>
+       ${itens}
+       Total: R$ ${p.total}<br>
+       Status: ${p.status}<br>
+       ${p.data}<br>
+       ${podeCancelar ? `<button onclick="cancelar(${p.id})">Cancelar</button>` : ""}
+       <hr>
     `;
 
     lista.appendChild(div);
@@ -98,17 +94,18 @@ window.cancelar = (id) => {
 // ================= UI =================
 function mostrarMsg(texto, tipo = "normal") {
   const msg = document.getElementById("msg");
-
   msg.textContent = texto;
-
   msg.style.background =
     tipo === "erro" ? "#e74c3c" :
     tipo === "sucesso" ? "#2ecc71" :
     "#333";
-
   msg.style.display = "block";
-
   setTimeout(() => {
     msg.style.display = "none";
   }, 3000);
 }
+
+// Voltar para home (se não tiver botão no HTML)
+window.voltarHome = () => {
+  window.location.href = "home.html";
+};
