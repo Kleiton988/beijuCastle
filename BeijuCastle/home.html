@@ -2,16 +2,12 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Home</title>
-
+  <title>Home - BeijúCastle 🫓</title>
   <link rel="stylesheet" href="home.css">
-
   <script type="module" src="firebase.js"></script>
   <script type="module" src="home.js" defer></script>
 </head>
-
 <body class="home">
-
   <header class="topo">
     <h1>BeijúCastle 🫓</h1>
     <p id="userEmail"></p>
@@ -20,66 +16,43 @@
     <button id="btnAdmin" style="display:none;" onclick="irAdmin()">Admin</button>
   </header>
 
-  <main class="cardapio">
+  <!-- Categorias -->
+  <div class="categorias" style="text-align:center; margin: 15px 0;">
+    <button class="cat-btn ativo" data-categoria="todos">Todos</button>
+    <button class="cat-btn" data-categoria="tradicional">Tradicional</button>
+    <button class="cat-btn" data-categoria="recheado">Recheado</button>
+    <button class="cat-btn" data-categoria="doce">Doce</button>
+    <button class="cat-btn" data-categoria="especial">Especial</button>
+  </div>
 
-    <div class="item">
-      <h2>Beijú Tradicional</h2>
-      <span>R$ 5</span>
-      <button onclick="addCarrinho('Tradicional', 5)">Adicionar</button>
-      <button onclick="toggleFavorito('Tradicional', 5)">⭐</button>
-    </div>
+  <!-- Busca -->
+  <div style="text-align:center; margin-bottom: 15px;">
+    <input type="text" id="busca" placeholder="Buscar produto..." oninput="aplicarFiltros()" style="width: 80%; max-width: 400px; padding: 8px;">
+  </div>
 
-    <div class="item">
-      <h2>Beijú Queijo</h2>
-      <span>R$ 7</span>
-      <button onclick="addCarrinho('Queijo', 7)">Adicionar</button>
-    </div>
-
-    <div class="item">
-      <h2>Beijú Doce</h2>
-      <span>R$ 8</span>
-      <button onclick="addCarrinho('Doce', 8)">Adicionar</button>
-    </div>
-
-  </main>
+  <!-- Cardápio dinâmico -->
+  <main class="cardapio" id="cardapioContainer"></main>
 
   <aside class="carrinho">
+    <h2>⭐ Favoritos</h2>
+    <div id="favoritos"></div>
+    <button onclick="limparTodos()" style="margin-top:5px;">🗑️ Limpar todos os favoritos</button>
 
-  <h2>⭐ Favoritos</h2>
-  <div id="favoritos"></div>
-
-  <h2>Carrinho</h2>
-    
-
+    <h2>🛒 Carrinho</h2>
     <div id="listaCarrinho"></div>
+    <button onclick="limparCarrinho()" style="margin-top:5px;">🗑️ Limpar Carrinho</button>
 
     <input type="text" id="cupom" placeholder="Cupom (ex: BEIJU10)">
     <button onclick="aplicarCupom()">Aplicar Cupom</button>
-
-    <p id="total"></p>
-
-    <button onclick="finalizarPedido()">Finalizar Pedido</button>
-    <button onclick="limparTodos()">🗑️ Limpar todos os favoritos</button>
-  </aside>
-  <!-- Busca (coloque antes do cardápio) -->
-<input type="text" id="busca" placeholder="Buscar produto..." oninput="filtrarProdutos(this.value)">
-
-<!-- ... cardápio ... -->
-
-
-<!-- Botão limpar carrinho (ao lado do carrinho) -->
-<button onclick="limparCarrinho()">🗑️ Limpar Carrinho</button>
-<div id="mensagemSistema" style="
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  background: #333;
-  color: white;
-  padding: 12px 18px;
-  border-radius: 8px;
-  display: none;
-  z-index: 9999;
-">
+<div style="margin: 10px 0;">
+  <label><input type="radio" name="frete" value="retirada" onchange="alternarFrete('retirada')"> Retirar na loja (grátis)</label>
+  <label><input type="radio" name="frete" value="entrega" onchange="alternarFrete('entrega')" checked> Entrega (+ R$ 5,00)</label>
 </div>
+    <p id="total"></p>
+    <button onclick="finalizarPedido()">Finalizar Pedido</button>
+    
+  </aside>
+
+  <div id="mensagemSistema" style="position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 18px; border-radius:8px; display:none; z-index:9999;"></div>
 </body>
 </html>

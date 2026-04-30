@@ -1,6 +1,7 @@
 import { auth } from "./firebase.js";
 import { salvarPedido, listarPedidosPorUsuario } from "./pedidos.js";
-import { favoritarItem, listarFavoritos, removerFavorito } from "./favoritos.js";
+import { favoritarItem, listarFavoritos, removerFavorito, limparTodosFavoritos } from "./favoritos.js";
+import { avaliarProduto, obterNotaMedia, obterAvaliacaoUsuario } from "./avaliacoes.js";
 import {
   onAuthStateChanged,
   signOut
@@ -10,24 +11,34 @@ import {
 const state = {
   carrinho: JSON.parse(localStorage.getItem("carrinho")) || [],
   usuario: null,
-  cupom: { codigo: null, desconto: 0, aplicado: false },
-  produtosVisiveis: [] // para busca
+  cupom: { codigo: null, desconto: 0, aplicado: false, freteGratis: false },
+  categoriaAtiva: "todos",
+  termoBusca: "",
+  freteTipo: "entrega"   // "entrega" ou "retirada"
 };
 
-// ================= PRODUTOS (base) =================
-const TODOS_PRODUTOS = [
-  { nome: "Beijú Tradicional", preco: 5 },
-  { nome: "Beijú Queijo", preco: 7 },
-  { nome: "Beijú Doce", preco: 8 }
+const FRETE_PADRAO = 5.00; // valor fixo para entrega
+
+// ================= PRODUTOS (8) =================
+const PRODUTOS = [
+  { nome: "Beijú Tradicional", preco: 5, categoria: "tradicional" },
+  { nome: "Beijú Queijo", preco: 7, categoria: "recheado" },
+  { nome: "Beijú Doce", preco: 8, categoria: "doce" },
+  { nome: "Beijú Carne Seca", preco: 10, categoria: "recheado" },
+  { nome: "Beijú Frango", preco: 9, categoria: "recheado" },
+  { nome: "Beijú Chocolate", preco: 8, categoria: "doce" },
+  { nome: "Beijú Nutella", preco: 12, categoria: "especial" },
+  { nome: "Beijú Vegano", preco: 9, categoria: "especial" }
 ];
 
 // ================= CUPONS =================
 const CUPONS = {
-  "BEIJU10": { desconto: 0.1, minimo: 20 },
-  "PROMO20": { desconto: 0.2, minimo: 40 }
+  "BEIJU10": { desconto: 0.1, minimo: 20, tipo: "desconto" },
+  "PROMO20": { desconto: 0.2, minimo: 40, tipo: "desconto" },
+  "FRETEGRATIS": { desconto: 0, minimo: 30, tipo: "fretegratis" }
 };
 
-// ================= INIT =================
+// ================= INICIALIZAÇÃO =================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     state.usuario = user;
@@ -41,8 +52,10 @@ onAuthStateChanged(auth, (user) => {
       }
     }).catch(() => {});
 
+    renderCardapio();
     renderAll();
     carregarUltimosPedidos();
+    configurarCategorias();
   } else {
     window.location.href = "index.html";
   }
@@ -58,24 +71,113 @@ document.getElementById("logout").addEventListener("click", async () => {
 window.irPerfil = () => window.location.href = "perfil.html";
 window.irAdmin = () => window.location.href = "admin.html";
 
-// ================= BUSCA =================
-window.filtrarProdutos = (termo) => {
-  const container = document.querySelector(".cardapio");
+// ================= CATEGORIAS =================
+function configurarCategorias() {
+  const botoes = document.querySelectorAll(".cat-btn");
+  botoes.forEach(btn => {
+    btn.addEventListener("click", () => {
+      botoes.forEach(b => b.classList.remove("ativo"));
+      btn.classList.add("ativo");
+      state.categoriaAtiva = btn.dataset.categoria;
+      aplicarFiltros();
+    });
+  });
+}
+
+// ================= BUSCA E FILTROS =================
+window.aplicarFiltros = () => {
+  const termo = document.getElementById("busca").value.toLowerCase().trim();
+  state.termoBusca = termo;
+  renderCardapio();
+};
+
+function obterProdutosFiltrados() {
+  return PRODUTOS.filter(prod => {
+    const catOk = state.categoriaAtiva === "todos" || prod.categoria === state.categoriaAtiva;
+    const nomeOk = prod.nome.toLowerCase().includes(state.termoBusca);
+    return catOk && nomeOk;
+  });
+}
+
+// ================= RENDERIZAÇÃO DO CARDÁPIO (com estrelas) =================
+function renderCardapio() {
+  const container = document.getElementById("cardapioContainer");
   if (!container) return;
 
-  const termoLower = termo.toLowerCase().trim();
-  const itens = container.querySelectorAll(".item");
+  const produtosFiltrados = obterProdutosFiltrados();
+  container.innerHTML = "";
 
-  if (termoLower === "") {
-    itens.forEach(item => item.style.display = "block");
+  if (produtosFiltrados.length === 0) {
+    container.innerHTML = "<p style='text-align:center;'>Nenhum produto encontrado.</p>";
     return;
   }
 
-  itens.forEach(item => {
-    const nome = item.querySelector("h2")?.textContent.toLowerCase() || "";
-    item.style.display = nome.includes(termoLower) ? "block" : "none";
+  produtosFiltrados.forEach(prod => {
+    const media = obterNotaMedia(prod.nome);
+    const minhaNota = state.usuario ? obterAvaliacaoUsuario(prod.nome, state.usuario.email) : 0;
+
+    const div = document.createElement("div");
+    div.className = "item";
+
+    const estrelasHTML = gerarEstrelasInterativas(prod.nome, minhaNota);
+    const mediaHTML = media > 0 ? ` Média: ${gerarEstrelasFixas(media)} (${media.toFixed(1)})` : " Sem avaliações";
+
+    div.innerHTML = `
+      <h2>${prod.nome}</h2>
+      <span class="preco">R$ ${prod.preco.toFixed(2)}</span>
+      <div class="avaliacao">
+        <div class="sua-nota">Sua nota: ${estrelasHTML}</div>
+        <div class="media-nota">${mediaHTML}</div>
+      </div>
+      <button class="btn-add" data-nome="${prod.nome}" data-preco="${prod.preco}">Adicionar</button>
+      <button class="btn-fav" data-nome="${prod.nome}" data-preco="${prod.preco}">⭐</button>
+    `;
+
+    div.querySelector(".btn-add").addEventListener("click", () => {
+      window.addCarrinho(prod.nome, prod.preco);
+    });
+
+    div.querySelector(".btn-fav").addEventListener("click", () => {
+      window.toggleFavorito(prod.nome, prod.preco);
+    });
+
+    container.appendChild(div);
   });
-};
+}
+
+function gerarEstrelasInterativas(produtoNome, notaAtual) {
+  let html = "";
+  for (let i = 1; i <= 5; i++) {
+    const preenchida = i <= notaAtual ? "★" : "☆";
+    html += `<span class="estrela-clicavel" data-produto="${produtoNome}" data-nota="${i}" style="cursor:pointer; font-size:1.2em;">${preenchida}</span>`;
+  }
+  return html;
+}
+
+function gerarEstrelasFixas(media) {
+  const inteira = Math.floor(media);
+  const resto = media - inteira;
+  let estrelas = "";
+  for (let i = 1; i <= 5; i++) {
+    if (i <= inteira) estrelas += "★";
+    else if (i === inteira + 1 && resto >= 0.5) estrelas += "★";
+    else estrelas += "☆";
+  }
+  return estrelas;
+}
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("estrela-clicavel")) {
+    const produto = e.target.dataset.produto;
+    const nota = parseInt(e.target.dataset.nota);
+    if (state.usuario && produto && nota) {
+      avaliarProduto(produto, state.usuario.email, nota);
+      renderCardapio();
+    } else {
+      alert("Faça login para avaliar.");
+    }
+  }
+});
 
 // ================= CARRINHO =================
 window.addCarrinho = (nome, preco) => {
@@ -95,7 +197,6 @@ window.mudarQtd = (i, tipo) => {
   renderCarrinho();
 };
 
-// NOVO: Limpar carrinho
 window.limparCarrinho = () => {
   if (state.carrinho.length === 0) return;
   if (confirm("Deseja realmente limpar o carrinho?")) {
@@ -106,25 +207,58 @@ window.limparCarrinho = () => {
   }
 };
 
+// ================= FRETE =================
+window.alternarFrete = (tipo) => {
+  state.freteTipo = tipo;
+  renderCarrinho(); // atualiza exibição do frete
+};
+
+function calcularFrete() {
+  // Se for retirada, frete é zero
+  if (state.freteTipo === "retirada") return 0;
+  // Se cupom de frete grátis estiver ativo e condições atendidas
+  if (state.cupom.freteGratis && calcularSubtotal() >= CUPONS["FRETEGRATIS"].minimo) {
+    return 0;
+  }
+  return FRETE_PADRAO;
+}
+
 // ================= CUPOM =================
 window.aplicarCupom = () => {
   const input = document.getElementById("cupom");
   const codigo = input.value.trim().toUpperCase();
 
-  if (state.carrinho.length === 0) return mostrarMensagem("Adicione itens antes do cupom", "erro");
-  if (!CUPONS[codigo]) return mostrarMensagem("Cupom inválido", "erro");
+  if (state.carrinho.length === 0) {
+    return mostrarMensagem("Adicione itens antes do cupom", "erro");
+  }
+
+  if (!CUPONS[codigo]) {
+    return mostrarMensagem("Cupom inválido", "erro");
+  }
 
   const subtotal = calcularSubtotal();
-  if (subtotal < CUPONS[codigo].minimo) return mostrarMensagem("Valor mínimo não atingido", "erro");
-  if (state.cupom.aplicado) return mostrarMensagem("Cupom já aplicado", "erro");
+  if (subtotal < CUPONS[codigo].minimo) {
+    return mostrarMensagem(`Valor mínimo para ativar este cupom é R$ ${CUPONS[codigo].minimo.toFixed(2)}`, "erro");
+  }
 
-  state.cupom = { codigo, desconto: CUPONS[codigo].desconto, aplicado: true };
-  mostrarMensagem("Cupom aplicado!", "sucesso");
+  if (state.cupom.aplicado) {
+    return mostrarMensagem("Cupom já aplicado. Remova-o antes de aplicar outro.", "erro");
+  }
+
+  const cupomInfo = CUPONS[codigo];
+  state.cupom = {
+    codigo,
+    desconto: cupomInfo.tipo === "desconto" ? cupomInfo.desconto : 0,
+    aplicado: true,
+    freteGratis: cupomInfo.tipo === "fretegratis"
+  };
+
+  mostrarMensagem("Cupom aplicado com sucesso!", "sucesso");
   renderCarrinho();
 };
 
 window.removerCupom = () => {
-  state.cupom = { codigo: null, desconto: 0, aplicado: false };
+  state.cupom = { codigo: null, desconto: 0, aplicado: false, freteGratis: false };
   mostrarMensagem("Cupom removido", "sucesso");
   renderCarrinho();
 };
@@ -141,8 +275,10 @@ window.finalizarPedido = () => {
     itens: [...state.carrinho],
     subtotal: resumo.subtotal,
     desconto: resumo.descontoValor,
+    frete: resumo.frete,
     total: resumo.total,
     cupom: state.cupom.codigo,
+    tipoFrete: state.freteTipo,
     status: "pendente",
     data: new Date().toLocaleString()
   };
@@ -151,11 +287,12 @@ window.finalizarPedido = () => {
   mostrarMensagem("Pedido finalizado!", "sucesso");
 
   state.carrinho = [];
-  state.cupom = { codigo: null, desconto: 0, aplicado: false };
+  state.cupom = { codigo: null, desconto: 0, aplicado: false, freteGratis: false };
+  state.freteTipo = "entrega";
   document.getElementById("cupom").value = "";
   salvarCarrinho();
   renderAll();
-  carregarUltimosPedidos(); // atualiza mini-histórico
+  carregarUltimosPedidos();
 };
 
 // ================= FAVORITOS =================
@@ -169,30 +306,18 @@ window.toggleFavorito = (nome, preco) => {
     mostrarMensagem("Adicionado aos favoritos");
   }
   renderFavoritos();
+  renderCardapio();
 };
 
-// ================= ÚLTIMOS PEDIDOS (NOVO) =================
-function carregarUltimosPedidos() {
-  const container = document.getElementById("ultimosPedidos");
-  if (!container || !state.usuario) return;
-
-  const pedidos = listarPedidosPorUsuario(state.usuario.email);
-  if (pedidos.length === 0) {
-    container.innerHTML = "<p>Nenhum pedido ainda.</p>";
-    return;
+window.limparTodos = () => {
+  if (confirm("Deseja realmente limpar todos os favoritos?")) {
+    limparTodosFavoritos();
+    renderFavoritos();
+    mostrarMensagem("Favoritos limpos", "sucesso");
   }
+};
 
-  // Mostra os 3 mais recentes
-  const recentes = pedidos.sort((a, b) => b.id - a.id).slice(0, 3);
-  container.innerHTML = recentes.map(p => `
-    <div class="mini-pedido">
-      <strong>#${p.id}</strong> - ${p.status} - R$ ${p.total.toFixed(2)} <br>
-      <small>${p.data}</small>
-    </div>
-  `).join("");
-}
-
-// ================= RENDER =================
+// ================= RENDER HELPERS =================
 function renderCarrinho() {
   const lista = document.getElementById("listaCarrinho");
   const totalEl = document.getElementById("total");
@@ -210,7 +335,17 @@ function renderCarrinho() {
   });
 
   const r = calcularResumo();
-  totalEl.textContent = `Total: R$ ${r.total.toFixed(2)}`;
+  let resumoHTML = `Subtotal: R$ ${r.subtotal.toFixed(2)}<br>`;
+  if (state.cupom.aplicado && state.cupom.desconto > 0) {
+    resumoHTML += `Desconto (${state.cupom.codigo}): -R$ ${r.descontoValor.toFixed(2)}<br>`;
+  }
+  resumoHTML += `Frete: R$ ${r.frete.toFixed(2)}`;
+  if (state.cupom.freteGratis && r.frete === 0 && state.freteTipo === "entrega") {
+    resumoHTML += ` (Frete Grátis!)`;
+  }
+  resumoHTML += `<br><strong>Total: R$ ${r.total.toFixed(2)}</strong>`;
+
+  totalEl.innerHTML = resumoHTML;
 }
 
 function renderFavoritos() {
@@ -218,7 +353,7 @@ function renderFavoritos() {
   if (!c) return;
   c.innerHTML = "";
   listarFavoritos().forEach(i => {
-    c.innerHTML += `${i.nome} - R$ ${i.preco.toFixed(2)}<br>`;
+    c.innerHTML += `<div>${i.nome} - R$ ${i.preco.toFixed(2)}</div>`;
   });
 }
 
@@ -227,24 +362,27 @@ function renderAll() {
   renderFavoritos();
 }
 
+function carregarUltimosPedidos() {
+  // função mantida para futura exibição; pode ser removida se não usar
+}
+
 // ================= HELPERS =================
 function salvarCarrinho() {
   localStorage.setItem("carrinho", JSON.stringify(state.carrinho));
 }
+
 function calcularSubtotal() {
   return state.carrinho.reduce((t, i) => t + i.preco * i.qtd, 0);
 }
-function calcularEntrega(subtotal) {
-  return subtotal >= 30 ? 0 : 5;
-}
+
 function calcularResumo() {
   const subtotal = calcularSubtotal();
   const descontoValor = subtotal * state.cupom.desconto;
-  const total = subtotal - descontoValor + calcularEntrega(subtotal);
-  return { subtotal, descontoValor, total };
+  const frete = calcularFrete();
+  const total = subtotal - descontoValor + frete;
+  return { subtotal, descontoValor, frete, total };
 }
 
-// ================= UI =================
 function mostrarMensagem(texto, tipo = "normal") {
   const msg = document.getElementById("mensagemSistema");
   if (!msg) return;

@@ -3,7 +3,6 @@ import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/f
 
 let usuarioEmail = null;
 
-// ================= INICIALIZAÇÃO =================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     usuarioEmail = user.email;
@@ -12,7 +11,6 @@ onAuthStateChanged(auth, (user) => {
   }
 });
 
-// ================= STORAGE =================
 function getKey() {
   return usuarioEmail ? `favoritos_${usuarioEmail}` : "favoritos_anonimo";
 }
@@ -29,12 +27,10 @@ function salvarFavoritos(lista) {
   localStorage.setItem(getKey(), JSON.stringify(lista));
 }
 
-// ================= OPERAÇÕES BÁSICAS =================
 export function favoritarItem(item) {
   if (!item || !item.nome) return;
   const favoritos = getFavoritos();
-  const existe = favoritos.find(f => f.nome === item.nome);
-  if (!existe) {
+  if (!favoritos.find(f => f.nome === item.nome)) {
     favoritos.push({ nome: item.nome, preco: item.preco });
     salvarFavoritos(favoritos);
   }
@@ -62,12 +58,11 @@ export function toggleFavorito(item) {
   }
 }
 
-// ================= NOVA FUNCIONALIDADE: LIMPAR TODOS =================
 export function limparTodosFavoritos() {
   salvarFavoritos([]);
 }
 
-// ================= UI (usada na página de favoritos) =================
+// UI
 function renderFavoritos() {
   const container = document.getElementById("listaFavoritos");
   const vazioMsg = document.getElementById("vazioMsg");
@@ -75,7 +70,6 @@ function renderFavoritos() {
 
   const favoritos = getFavoritos();
   container.innerHTML = "";
-
   if (favoritos.length === 0) {
     if (vazioMsg) vazioMsg.style.display = "block";
     return;
@@ -87,40 +81,18 @@ function renderFavoritos() {
     div.className = "item";
     div.innerHTML = `
       <span>${item.nome} - R$ ${item.preco.toFixed(2)}</span>
-      <div>
-        <button class="btn-comprar" data-nome="${item.nome}" data-preco="${item.preco}">🛒</button>
-        <button class="btn-remover" data-nome="${item.nome}">❌</button>
-      </div>
+      <button onclick="removerFavoritoItem('${item.nome}')">❌</button>
     `;
     container.appendChild(div);
   });
-
-  // Eventos delegados
-  container.querySelectorAll(".btn-comprar").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const nome = btn.dataset.nome;
-      const preco = parseFloat(btn.dataset.preco);
-      if (window.addCarrinho) {
-        window.addCarrinho(nome, preco);
-        alert("Adicionado ao carrinho!");
-      } else {
-        alert("Carrinho indisponível");
-      }
-    });
-  });
-
-  container.querySelectorAll(".btn-remover").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const nome = btn.dataset.nome;
-      removerFavorito(nome);
-      renderFavoritos();
-    });
-  });
 }
 
-// ================= INICIALIZAÇÃO AUTOMÁTICA =================
+window.removerFavoritoItem = (nome) => {
+  removerFavorito(nome);
+  renderFavoritos();
+};
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Aguarda o Firebase determinar o usuário e então renderiza
   onAuthStateChanged(auth, (user) => {
     if (user) {
       usuarioEmail = user.email;
@@ -128,13 +100,3 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 });
-
-// Botão de limpar todos (adicione no HTML um botão com onclick="limparTodos()")
-window.limparTodos = () => {
-  if (confirm("Deseja realmente remover todos os favoritos?")) {
-    limparTodosFavoritos();
-    renderFavoritos();
-  }
-};
-
-window.voltarHome = () => window.location.href = "home.html";
