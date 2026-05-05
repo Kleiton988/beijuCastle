@@ -6,10 +6,24 @@ import {
 
 const msg = document.getElementById("mensagem");
 
-// LOGIN
+// ================= TRADUÇÃO DE ERROS =================
+function traduzirErro(codigo) {
+  const map = {
+    "auth/invalid-email": "Formato de email inválido.",
+    "auth/weak-password": "A senha deve ter no mínimo 6 caracteres.",
+    "auth/email-already-in-use": "Este email já está cadastrado.",
+    "auth/user-not-found": "Email ou senha inválidos.",
+    "auth/wrong-password": "Email ou senha inválidos.",
+    "auth/invalid-credential": "Email ou senha inválidos.",
+    "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde."
+  };
+  return map[codigo] || "Erro inesperado. Tente novamente.";
+}
+
+// ================= LOGIN =================
 document.getElementById("btnLogin").addEventListener("click", async () => {
-  const email = document.getElementById("loginEmail").value;
-  const senha = document.getElementById("loginSenha").value;
+  const email = document.getElementById("loginEmail").value.trim();
+  const senha = document.getElementById("loginSenha").value.trim(); // trim aplicado
 
   if (!email || !senha) {
     msg.textContent = "Preencha todos os campos!";
@@ -20,7 +34,7 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
   try {
     await signInWithEmailAndPassword(auth, email, senha);
 
-    // Sincroniza localStorage: cria usuário se não existir
+    // Sincroniza localStorage: cria se não existir
     import("./usuarios.js").then(mod => {
       let user = mod.buscarUsuario(email);
       if (!user) {
@@ -38,16 +52,16 @@ document.getElementById("btnLogin").addEventListener("click", async () => {
     setTimeout(() => {
       window.location.href = "home.html";
     }, 1000);
-  } catch {
-    msg.textContent = "Email ou senha inválidos!";
+  } catch (e) {
+    msg.textContent = traduzirErro(e.code);
     msg.style.color = "red";
   }
 });
 
-// CADASTRO
+// ================= CADASTRO =================
 document.getElementById("btnCadastro").addEventListener("click", async () => {
-  const email = document.getElementById("cadastroEmail").value;
-  const senha = document.getElementById("cadastroSenha").value;
+  const email = document.getElementById("cadastroEmail").value.trim();
+  const senha = document.getElementById("cadastroSenha").value.trim(); // trim
 
   if (!email || !senha) {
     msg.textContent = "Preencha todos os campos!";
@@ -77,10 +91,10 @@ document.getElementById("btnCadastro").addEventListener("click", async () => {
       mod.setUsuarioAtual(usuario);
     });
 
-    msg.textContent = "Conta criada!";
+    msg.textContent = "Conta criada com sucesso!";
     msg.style.color = "green";
   } catch (e) {
-    msg.textContent = e.message;
+    msg.textContent = traduzirErro(e.code);
     msg.style.color = "red";
   }
 });

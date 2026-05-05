@@ -1,7 +1,8 @@
 import { auth } from "./firebase.js";
 import { salvarPedido, listarPedidosPorUsuario } from "./pedidos.js";
 import { favoritarItem, listarFavoritos, removerFavorito, limparTodosFavoritos } from "./favoritos.js";
-import { avaliarProduto, obterNotaMedia, obterAvaliacaoUsuario } from "./avaliacoes.js";
+import { avaliarProduto, obterNotaMedia, obterAvaliacaoUsuario, removerAvaliacao } from "./avaliacoes.js";
+import { buscarUsuario } from "./usuarios.js";
 import {
   onAuthStateChanged,
   signOut
@@ -14,10 +15,10 @@ const state = {
   cupom: { codigo: null, desconto: 0, aplicado: false, freteGratis: false },
   categoriaAtiva: "todos",
   termoBusca: "",
-  freteTipo: "entrega"   // "entrega" ou "retirada"
+  freteTipo: "entrega"
 };
 
-const FRETE_PADRAO = 5.00; // valor fixo para entrega
+const FRETE_PADRAO = 5.00;
 
 // ================= PRODUTOS (8) =================
 const PRODUTOS = [
@@ -38,7 +39,7 @@ const CUPONS = {
   "FRETEGRATIS": { desconto: 0, minimo: 30, tipo: "fretegratis" }
 };
 
-// ================= INICIALIZAÇÃO =================
+// ================= INIT =================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     state.usuario = user;
@@ -99,7 +100,7 @@ function obterProdutosFiltrados() {
   });
 }
 
-// ================= RENDERIZAÇÃO DO CARDÁPIO (com estrelas) =================
+// ================= RENDER CARDÁPIO (COM AVALIAÇÕES) =================
 function renderCardapio() {
   const container = document.getElementById("cardapioContainer");
   if (!container) return;
@@ -166,16 +167,20 @@ function gerarEstrelasFixas(media) {
   return estrelas;
 }
 
+// ================= TRATAMENTO DE CLIQUE NA AVALIAÇÃO (REMOVER) =================
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("estrela-clicavel")) {
     const produto = e.target.dataset.produto;
     const nota = parseInt(e.target.dataset.nota);
-    if (state.usuario && produto && nota) {
-      avaliarProduto(produto, state.usuario.email, nota);
-      renderCardapio();
+    if (!state.usuario || !produto || isNaN(nota)) return;
+
+    const notaAnterior = obterAvaliacaoUsuario(produto, state.usuario.email);
+    if (nota === notaAnterior) {
+      removerAvaliacao(produto, state.usuario.email);
     } else {
-      alert("Faça login para avaliar.");
+      avaliarProduto(produto, state.usuario.email, nota);
     }
+    renderCardapio();
   }
 });
 
@@ -210,16 +215,12 @@ window.limparCarrinho = () => {
 // ================= FRETE =================
 window.alternarFrete = (tipo) => {
   state.freteTipo = tipo;
-  renderCarrinho(); // atualiza exibição do frete
+  renderCarrinho();
 };
 
 function calcularFrete() {
-  // Se for retirada, frete é zero
   if (state.freteTipo === "retirada") return 0;
-  // Se cupom de frete grátis estiver ativo e condições atendidas
-  if (state.cupom.freteGratis && calcularSubtotal() >= CUPONS["FRETEGRATIS"].minimo) {
-    return 0;
-  }
+  if (state.cupom.freteGratis && calcularSubtotal() >= CUPONS["FRETEGRATIS"].minimo) return 0;
   return FRETE_PADRAO;
 }
 
@@ -228,22 +229,15 @@ window.aplicarCupom = () => {
   const input = document.getElementById("cupom");
   const codigo = input.value.trim().toUpperCase();
 
-  if (state.carrinho.length === 0) {
-    return mostrarMensagem("Adicione itens antes do cupom", "erro");
-  }
-
-  if (!CUPONS[codigo]) {
-    return mostrarMensagem("Cupom inválido", "erro");
-  }
+  if (state.carrinho.length === 0) return mostrarMensagem("Adicione itens antes do cupom", "erro");
+  if (!CUPONS[codigo]) return mostrarMensagem("Cupom inválido", "erro");
 
   const subtotal = calcularSubtotal();
   if (subtotal < CUPONS[codigo].minimo) {
-    return mostrarMensagem(`Valor mínimo para ativar este cupom é R$ ${CUPONS[codigo].minimo.toFixed(2)}`, "erro");
+    return mostrarMensagem(`Valor mínimo para este cupom: R$ ${CUPONS[codigo].minimo.toFixed(2)}`, "erro");
   }
 
-  if (state.cupom.aplicado) {
-    return mostrarMensagem("Cupom já aplicado. Remova-o antes de aplicar outro.", "erro");
-  }
+  if (state.cupom.aplicado) return mostrarMensagem("Já existe um cupom aplicado. Remova-o primeiro.", "erro");
 
   const cupomInfo = CUPONS[codigo];
   state.cupom = {
@@ -253,7 +247,7 @@ window.aplicarCupom = () => {
     freteGratis: cupomInfo.tipo === "fretegratis"
   };
 
-  mostrarMensagem("Cupom aplicado com sucesso!", "sucesso");
+  mostrarMensagem("Cupom aplicado!", "sucesso");
   renderCarrinho();
 };
 
@@ -263,15 +257,24 @@ window.removerCupom = () => {
   renderCarrinho();
 };
 
-// ================= FINALIZAR =================
+// ================= FINALIZAR PEDIDO (COM NOME E ENDEREÇO ATUAIS) =================
 window.finalizarPedido = () => {
   if (state.carrinho.length === 0) return mostrarMensagem("Carrinho vazio", "erro");
   if (!state.usuario) return mostrarMensagem("Usuário não autenticado", "erro");
 
+  if (!confirm("Deseja realmente finalizar o pedido?")) return;
+
   const resumo = calcularResumo();
+
+  // 🔍 Busca sempre os dados mais recentes do perfil (resolve ID 61)
+  const dadosUsuario = buscarUsuario(state.usuario.email);
+  const nomeCliente = dadosUsuario?.nome || "Não informado";
+  const enderecoCliente = dadosUsuario?.endereco || "Não informado";
+
   const pedido = {
     id: Date.now(),
     usuario: state.usuario.email,
+    nomeCliente: nomeCliente,               // ✅ Adicionado (ID 28)
     itens: [...state.carrinho],
     subtotal: resumo.subtotal,
     desconto: resumo.descontoValor,
@@ -279,12 +282,13 @@ window.finalizarPedido = () => {
     total: resumo.total,
     cupom: state.cupom.codigo,
     tipoFrete: state.freteTipo,
+    endereco: enderecoCliente,             // ✅ Endereço mais recente
     status: "pendente",
     data: new Date().toLocaleString()
   };
 
   salvarPedido(pedido);
-  mostrarMensagem("Pedido finalizado!", "sucesso");
+  mostrarMensagem("Pedido finalizado com sucesso!", "sucesso");
 
   state.carrinho = [];
   state.cupom = { codigo: null, desconto: 0, aplicado: false, freteGratis: false };
@@ -317,7 +321,7 @@ window.limparTodos = () => {
   }
 };
 
-// ================= RENDER HELPERS =================
+// ================= RENDER =================
 function renderCarrinho() {
   const lista = document.getElementById("listaCarrinho");
   const totalEl = document.getElementById("total");
@@ -362,9 +366,7 @@ function renderAll() {
   renderFavoritos();
 }
 
-function carregarUltimosPedidos() {
-  // função mantida para futura exibição; pode ser removida se não usar
-}
+function carregarUltimosPedidos() {}
 
 // ================= HELPERS =================
 function salvarCarrinho() {

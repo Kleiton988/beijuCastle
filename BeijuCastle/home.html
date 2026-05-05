@@ -42,15 +42,18 @@
     <div id="listaCarrinho"></div>
     <button onclick="limparCarrinho()" style="margin-top:5px;">🗑️ Limpar Carrinho</button>
 
+    <!-- Opções de frete -->
+    <div style="margin: 10px 0;">
+      <label><input type="radio" name="frete" value="retirada" onchange="alternarFrete('retirada')"> Retirar na loja (grátis)</label>
+      <label><input type="radio" name="frete" value="entrega" onchange="alternarFrete('entrega')" checked> Entrega (+ R$ 5,00)</label>
+    </div>
+
     <input type="text" id="cupom" placeholder="Cupom (ex: BEIJU10)">
     <button onclick="aplicarCupom()">Aplicar Cupom</button>
-<div style="margin: 10px 0;">
-  <label><input type="radio" name="frete" value="retirada" onchange="alternarFrete('retirada')"> Retirar na loja (grátis)</label>
-  <label><input type="radio" name="frete" value="entrega" onchange="alternarFrete('entrega')" checked> Entrega (+ R$ 5,00)</label>
-</div>
+    <button onclick="removerCupom()">Remover Cupom</button>   <!-- CORREÇÃO ERRO 102 -->
+
     <p id="total"></p>
     <button onclick="finalizarPedido()">Finalizar Pedido</button>
-    
   </aside>
 
   <div id="mensagemSistema" style="position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 18px; border-radius:8px; display:none; z-index:9999;"></div>

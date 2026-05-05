@@ -1,6 +1,5 @@
 import { auth } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-
 import { buscarUsuario, atualizarUsuario } from "./usuarios.js";
 import { listarPedidosPorUsuario, cancelarPedido } from "./pedidos.js";
 
@@ -21,7 +20,12 @@ onAuthStateChanged(auth, (user) => {
 // ================= PERFIL =================
 function carregarPerfil() {
   const dados = buscarUsuario(usuarioAtual.email);
-  if (!dados) return;
+  if (!dados) {
+    document.getElementById("nome").value = "";
+    document.getElementById("telefone").value = "";
+    document.getElementById("endereco").value = "";
+    return;
+  }
 
   document.getElementById("nome").value = dados.nome || "";
   document.getElementById("telefone").value = dados.telefone || "";
@@ -33,17 +37,23 @@ window.salvarPerfil = () => {
   const telefone = document.getElementById("telefone").value.trim();
   const endereco = document.getElementById("endereco").value.trim();
 
-  if (!nome) {
-    return mostrarMsg("Nome obrigatório", "erro");
+  // Validação de campos obrigatórios
+  if (!nome || !telefone || !endereco) {
+    mostrarMsg("Preencha todos os campos (nome, telefone e endereço).", "erro");
+    return;
   }
 
-  atualizarUsuario(usuarioAtual.email, {
+  const sucesso = atualizarUsuario(usuarioAtual.email, {
     nome,
     telefone,
     endereco
   });
 
-  mostrarMsg("Perfil atualizado!", "sucesso");
+  if (sucesso) {
+    mostrarMsg("Perfil atualizado com sucesso!", "sucesso");
+  } else {
+    mostrarMsg("Erro ao atualizar o perfil. Tente novamente.", "erro");
+  }
 };
 
 // ================= PEDIDOS =================
@@ -69,15 +79,20 @@ function carregarPedidos() {
     });
 
     const podeCancelar = p.status === "pendente";
+    const nomeCliente = p.nomeCliente || "Não informado";
+    const enderecoPedido = p.endereco || "Não informado";
 
     div.innerHTML = `
-       <strong>Pedido #${p.id}</strong><br>
-       ${itens}
-       Total: R$ ${p.total}<br>
-       Status: ${p.status}<br>
-       ${p.data}<br>
-       ${podeCancelar ? `<button onclick="cancelar(${p.id})">Cancelar</button>` : ""}
-       <hr>
+      <strong>Pedido #${p.id}</strong><br>
+      Cliente: ${nomeCliente}<br>
+      ${itens}
+      Total: R$ ${p.total.toFixed(2)}<br>
+      Frete: R$ ${p.frete ? p.frete.toFixed(2) : "0.00"}<br>
+      Status: ${p.status}<br>
+      ${p.data}<br>
+      Endereço: ${enderecoPedido}<br>
+      ${podeCancelar ? `<button onclick="cancelar(${p.id})">Cancelar</button>` : ""}
+      <hr>
     `;
 
     lista.appendChild(div);
@@ -105,7 +120,6 @@ function mostrarMsg(texto, tipo = "normal") {
   }, 3000);
 }
 
-// Voltar para home (se não tiver botão no HTML)
 window.voltarHome = () => {
   window.location.href = "home.html";
 };
