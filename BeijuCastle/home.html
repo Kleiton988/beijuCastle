@@ -17,7 +17,7 @@
   </header>
 
   <!-- Categorias -->
-  <div class="categorias" style="text-align:center; margin: 15px 0;">
+  <div class="categorias">
     <button class="cat-btn ativo" data-categoria="todos">Todos</button>
     <button class="cat-btn" data-categoria="tradicional">Tradicional</button>
     <button class="cat-btn" data-categoria="recheado">Recheado</button>
@@ -27,34 +27,36 @@
 
   <!-- Busca -->
   <div style="text-align:center; margin-bottom: 15px;">
-    <input type="text" id="busca" placeholder="Buscar produto..." oninput="aplicarFiltros()" style="width: 80%; max-width: 400px; padding: 8px;">
+    <input type="text" id="busca" placeholder="Buscar produto..." oninput="aplicarFiltros()">
   </div>
 
-  <!-- Cardápio dinâmico -->
-  <main class="cardapio" id="cardapioContainer"></main>
+  <!-- Container principal: cardápio + carrinho (duas colunas) -->
+  <div class="conteudo-principal">
+    <main class="cardapio" id="cardapioContainer"></main>
 
-  <aside class="carrinho">
-    <h2>⭐ Favoritos</h2>
-    <div id="favoritos"></div>
-    <button onclick="limparTodos()" style="margin-top:5px;">🗑️ Limpar todos os favoritos</button>
+    <aside class="carrinho">
+      <h2>⭐ Favoritos</h2>
+      <div id="favoritos"></div>
+      <button onclick="limparTodos()" style="margin-top:5px;">🗑️ Limpar todos os favoritos</button>
 
-    <h2>🛒 Carrinho</h2>
-    <div id="listaCarrinho"></div>
-    <button onclick="limparCarrinho()" style="margin-top:5px;">🗑️ Limpar Carrinho</button>
+      <h2>🛒 Carrinho</h2>
+      <div id="listaCarrinho"></div>
+      <button onclick="limparCarrinho()" style="margin-top:5px;">🗑️ Limpar Carrinho</button>
 
-    <!-- Opções de frete -->
-    <div style="margin: 10px 0;">
-      <label><input type="radio" name="frete" value="retirada" onchange="alternarFrete('retirada')"> Retirar na loja (grátis)</label>
-      <label><input type="radio" name="frete" value="entrega" onchange="alternarFrete('entrega')" checked> Entrega (+ R$ 5,00)</label>
-    </div>
+      <!-- Opções de frete -->
+      <div style="margin: 10px 0;">
+        <label><input type="radio" name="frete" value="retirada" onchange="alternarFrete('retirada')"> Retirar na loja (grátis)</label>
+        <label><input type="radio" name="frete" value="entrega" onchange="alternarFrete('entrega')" checked> Entrega (+ R$ 5,00)</label>
+      </div>
 
-    <input type="text" id="cupom" placeholder="Cupom (ex: BEIJU10)">
-    <button onclick="aplicarCupom()">Aplicar Cupom</button>
-    <button onclick="removerCupom()">Remover Cupom</button>   <!-- CORREÇÃO ERRO 102 -->
+      <input type="text" id="cupom" placeholder="Cupom (ex: BEIJU10)">
+      <button onclick="aplicarCupom()">Aplicar Cupom</button>
+      <button onclick="removerCupom()">Remover Cupom</button>
 
-    <p id="total"></p>
-    <button onclick="finalizarPedido()">Finalizar Pedido</button>
-  </aside>
+      <p id="total"></p>
+      <button onclick="finalizarPedido()">Finalizar Pedido</button>
+    </aside>
+  </div>
 
   <div id="mensagemSistema" style="position:fixed; bottom:20px; right:20px; background:#333; color:white; padding:12px 18px; border-radius:8px; display:none; z-index:9999;"></div>
 </body>
