@@ -6,81 +6,65 @@
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-  background: #fdf6ec;
+  background: linear-gradient(135deg, #fdf6ec, #fae3c6);
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  height: 100vh;
+}
+
+.container {
+  width: 100%;
+  max-width: 450px;
   padding: 20px;
 }
 
-.login-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 20px;
-}
-
-.logo-area {
-  text-align: center;
-  color: #5e3a1c;
-}
-
-.logo-icon {
-  font-size: 4rem;
-}
-
-.logo-area h1 {
-  font-size: 2.5rem;
-  margin: 5px 0;
-}
-
-.logo-area p {
-  font-size: 1rem;
-  color: #7a5c3e;
-}
-
 .card {
-  background: white;
-  border-radius: 20px;
-  padding: 30px;
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+  background: #ffffff;
+  border-radius: 30px;
+  padding: 30px 25px;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+  border: 1px solid #f1d9b3;
+  text-align: center;
 }
 
-.tab-buttons {
+.card h1 {
+  font-size: 2.2rem;
+  color: #b45f2a;
+  margin-bottom: 5px;
+}
+
+.card p {
+  color: #7a5c3e;
+  margin-bottom: 20px;
+}
+
+/* Abas */
+.abas {
   display: flex;
   justify-content: center;
+  gap: 5px;
   margin-bottom: 25px;
 }
-
-.tab {
-  flex: 1;
-  padding: 10px;
+.aba {
+  background: #f4e0c9;
   border: none;
-  background: #f0e0cc;
-  cursor: pointer;
+  padding: 10px 25px;
+  border-radius: 20px 20px 0 0;
   font-weight: bold;
   color: #5e3a1c;
+  cursor: pointer;
   transition: 0.3s;
 }
-
-.tab.active {
-  background: #f4c069;
-  border-bottom: 3px solid #b45f2a;
-}
-
-.form-section {
-  display: none;
-}
-
-.form-section.active {
-  display: block;
+.aba.ativa {
+  background: #fffaf3;
+  border-bottom: 2px solid #b45f2a;
+  color: #b45f2a;
 }
 
 label {
   display: block;
+  text-align: left;
   margin: 12px 0 4px;
   font-weight: 600;
   color: #5e3a1c;
@@ -88,81 +72,79 @@ label {
 
 input {
   width: 100%;
-  padding: 12px;
+  padding: 12px 40px 12px 18px;
   border: 2px solid #e0c29b;
   border-radius: 25px;
   background: #fffaf3;
   outline: none;
   font-size: 1rem;
+  transition: 0.3s;
+  margin-bottom: 10px;
 }
 
 input:focus {
   border-color: #b45f2a;
+  box-shadow: 0 0 8px rgba(180, 95, 42, 0.2);
 }
 
 .senha-wrapper {
   position: relative;
 }
-
+.senha-wrapper input {
+  padding-right: 45px;
+}
 .toggle-senha {
   position: absolute;
-  right: 12px;
+  right: 15px;
   top: 50%;
   transform: translateY(-50%);
-  background: none;
-  border: none;
   cursor: pointer;
   font-size: 1.2rem;
+  user-select: none;
 }
 
-button[type="button"]:not(.toggle-senha):not(.google-btn) {
+button {
   width: 100%;
   padding: 12px;
   background: #f4c069;
   border: none;
   border-radius: 30px;
   font-weight: bold;
+  font-size: 1rem;
   color: #3d2815;
-  margin-top: 15px;
   cursor: pointer;
-  transition: 0.3s;
+  margin: 8px 0;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.06);
 }
-
-button[type="button"]:hover:not(.toggle-senha):not(.google-btn) {
+button:hover {
   background: #e0a84c;
+  color: #fff;
+  transform: translateY(-2px);
 }
-
 .google-btn {
-  width: 100%;
-  padding: 12px;
-  background: white;
-  border: 2px solid #ddd;
-  border-radius: 30px;
-  font-weight: bold;
-  color: #444;
-  margin-top: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  background: #fff;
+  border: 2px solid #e0c29b;
 }
-
 .google-btn:hover {
-  background: #f5f5f5;
+  background: #f4f4f4;
+  color: #3d2815;
 }
-
-#linkEsqueciSenha {
-  display: block;
-  text-align: center;
-  margin-top: 15px;
+.link-btn {
+  background: none;
+  border: none;
   color: #b45f2a;
-  text-decoration: none;
+  box-shadow: none;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: normal;
+}
+.link-btn:hover {
+  color: #8b3c15;
+  background: none;
+  transform: none;
 }
 
 #mensagem {
-  margin-top: 15px;
-  text-align: center;
-  font-size: 0.9rem;
-  min-height: 20px;
+  font-weight: 500;
 }

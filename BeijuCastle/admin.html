@@ -5,24 +5,29 @@
   <title>Admin</title>
   <link rel="stylesheet" href="admin.css">
 </head>
-
 <body>
 
 <header>
   <h1>Painel Admin</h1>
-  <button onclick="voltar()">Voltar</button>
+  <div>
+    <span id="contadorAtivos"></span>
+    <button onclick="voltar()" class="btn-voltar">⬅ Voltar</button>
+  </div>
 </header>
 
 <main>
-
   <section>
     <h2>📦 Pedidos</h2>
+    <div style="margin-bottom:10px;">
+      <button onclick="filtrarPedidos('todos')">Todos</button>
+      <button onclick="filtrarPedidos('ativos')">Ativos (pendente/preparando/pronto)</button>
+      <button onclick="filtrarPedidos('cancelados')">Cancelados</button>
+    </div>
     <div id="listaPedidos"></div>
+    <p id="mensagemAdmin" style="display:none; padding:10px; background:#2ecc71; color:white; border-radius:8px; margin-top:10px;"></p>
   </section>
-
 </main>
 
 <script type="module" src="admin.js"></script>
-
 </body>
 </html>

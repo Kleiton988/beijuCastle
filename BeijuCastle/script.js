@@ -1,68 +1,112 @@
-import { auth } from "./firebase.js";
+import { auth, googleProvider } from "./firebase.js";
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
-  GoogleAuthProvider,
+  sendEmailVerification,
   signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const msg = document.getElementById("mensagem");
 
-// ================= TRADUÇÃO DE ERROS =================
-function traduzirErro(codigo) {
-  const map = {
-    "auth/invalid-email": "Email inválido.",
-    "auth/weak-password": "A senha deve ter pelo menos 8 caracteres, incluindo letras e números.",
-    "auth/email-already-in-use": "Este email já está cadastrado.",
-    "auth/user-not-found": "Email não encontrado.",
-    "auth/wrong-password": "Senha incorreta.",
-    "auth/invalid-credential": "Email ou senha inválidos.",
-    "auth/too-many-requests": "Muitas tentativas. Tente mais tarde."
-  };
-  return map[codigo] || "Erro inesperado.";
-}
-
-// ================= VALIDAÇÕES =================
-function validarEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function validarSenhaForte(senha) {
-  return senha.length >= 8 && /[a-zA-Z]/.test(senha) && /[0-9]/.test(senha);
-}
-
 // ================= ABAS =================
-document.getElementById("tabLogin").addEventListener("click", () => {
-  document.getElementById("tabLogin").classList.add("active");
-  document.getElementById("tabCadastro").classList.remove("active");
-  document.getElementById("formLogin").classList.add("active");
-  document.getElementById("formCadastro").classList.remove("active");
-  msg.textContent = "";
-});
+document.getElementById("abaLogin").addEventListener("click", () => trocarAba("login"));
+document.getElementById("abaCadastro").addEventListener("click", () => trocarAba("cadastro"));
 
-document.getElementById("tabCadastro").addEventListener("click", () => {
-  document.getElementById("tabCadastro").classList.add("active");
-  document.getElementById("tabLogin").classList.remove("active");
-  document.getElementById("formCadastro").classList.add("active");
-  document.getElementById("formLogin").classList.remove("active");
+function trocarAba(tipo) {
+  document.getElementById("painelLogin").style.display = tipo === "login" ? "block" : "none";
+  document.getElementById("painelCadastro").style.display = tipo === "cadastro" ? "block" : "none";
+  document.getElementById("abaLogin").classList.toggle("ativa", tipo === "login");
+  document.getElementById("abaCadastro").classList.toggle("ativa", tipo === "cadastro");
   msg.textContent = "";
-});
+}
 
 // ================= MOSTRAR/OCULTAR SENHA =================
 document.querySelectorAll(".toggle-senha").forEach(btn => {
   btn.addEventListener("click", () => {
-    const input = document.getElementById(btn.dataset.target);
-    input.type = input.type === "password" ? "text" : "password";
+    const input = document.getElementById(btn.dataset.alvo);
+    if (input) {
+      input.type = input.type === "password" ? "text" : "password";
+      btn.textContent = input.type === "password" ? "👁️" : "🙈";
+    }
   });
 });
 
-// ================= ESQUECI SENHA =================
-document.getElementById("linkEsqueciSenha").addEventListener("click", async (e) => {
-  e.preventDefault();
+// ================= VALIDAÇÃO DE EMAIL =================
+function emailValido(email) {
+  const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return re.test(email);
+}
+
+// ================= VALIDAÇÃO DE SENHA FORTE =================
+function senhaForte(senha) {
+  // mínimo 6 caracteres, ao menos 1 maiúscula, 1 minúscula, 1 número
+  return senha.length >= 6 && /[A-Z]/.test(senha) && /[a-z]/.test(senha) && /[0-9]/.test(senha);
+}
+
+// ================= TRADUÇÃO DE ERROS =================
+function traduzirErro(codigo) {
+  const map = {
+    "auth/invalid-email": "Formato de email inválido.",
+    "auth/weak-password": "A senha deve ter no mínimo 6 caracteres.",
+    "auth/email-already-in-use": "Este email já está cadastrado.",
+    "auth/user-not-found": "Email ou senha inválidos.",
+    "auth/wrong-password": "Email ou senha inválidos.",
+    "auth/invalid-credential": "Email ou senha inválidos.",
+    "auth/too-many-requests": "Muitas tentativas. Tente novamente mais tarde.",
+    "auth/popup-closed-by-user": "Login com Google cancelado."
+  };
+  return map[codigo] || "Erro inesperado. Tente novamente.";
+}
+
+// ================= LOGIN =================
+document.getElementById("btnLogin").addEventListener("click", async () => {
   const email = document.getElementById("loginEmail").value.trim();
-  if (!email) {
-    msg.textContent = "Digite seu email para recuperar a senha.";
+  const senha = document.getElementById("loginSenha").value.trim();
+
+  if (!email || !senha) {
+    msg.textContent = "Preencha email e senha.";
+    msg.style.color = "red";
+    return;
+  }
+  if (!emailValido(email)) {
+    msg.textContent = "Formato de email inválido.";
+    msg.style.color = "red";
+    return;
+  }
+
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, senha);
+    // Opcional: verificar email verificado, mas não bloqueamos
+    await sincronizarUsuarioLocal(userCredential.user);
+    msg.textContent = "Login OK!";
+    msg.style.color = "green";
+    setTimeout(() => window.location.href = "home.html", 800);
+  } catch (e) {
+    msg.textContent = traduzirErro(e.code);
+    msg.style.color = "red";
+  }
+});
+
+// ================= LOGIN COM GOOGLE =================
+document.getElementById("btnGoogle").addEventListener("click", async () => {
+  try {
+    const result = await signInWithPopup(auth, googleProvider);
+    await sincronizarUsuarioLocal(result.user);
+    msg.textContent = "Login com Google OK!";
+    msg.style.color = "green";
+    setTimeout(() => window.location.href = "home.html", 800);
+  } catch (e) {
+    msg.textContent = traduzirErro(e.code);
+    msg.style.color = "red";
+  }
+});
+
+// ================= ESQUECI SENHA =================
+document.getElementById("btnEsqueciSenha").addEventListener("click", async () => {
+  const email = document.getElementById("loginEmail").value.trim();
+  if (!email || !emailValido(email)) {
+    msg.textContent = "Digite um email válido no campo de login para recuperar a senha.";
     msg.style.color = "red";
     return;
   }
@@ -76,106 +120,62 @@ document.getElementById("linkEsqueciSenha").addEventListener("click", async (e) 
   }
 });
 
-// ================= LOGIN GOOGLE =================
-document.getElementById("btnGoogleLogin").addEventListener("click", async () => {
-  const provider = new GoogleAuthProvider();
-  try {
-    const result = await signInWithPopup(auth, provider);
-    const user = result.user;
-    // Salva no localStorage
-    import("./usuarios.js").then(mod => {
-      let u = mod.buscarUsuario(user.email);
-      if (!u) {
-        u = { email: user.email, role: "user", nome: user.displayName || "" };
-        mod.salvarUsuario(u);
-      }
-      mod.setUsuarioAtual(u);
-    });
-    window.location.href = "home.html";
-  } catch (e) {
-    msg.textContent = "Erro ao entrar com Google.";
-    msg.style.color = "red";
-  }
-});
-
-// ================= LOGIN =================
-document.getElementById("btnLogin").addEventListener("click", async () => {
-  const email = document.getElementById("loginEmail").value.trim();
-  const senha = document.getElementById("loginSenha").value.trim();
-
-  if (!email || !senha) {
-    msg.textContent = "Preencha email e senha.";
-    msg.style.color = "red";
-    return;
-  }
-
-  try {
-    await signInWithEmailAndPassword(auth, email, senha);
-    import("./usuarios.js").then(mod => {
-      let user = mod.buscarUsuario(email);
-      if (!user) {
-        user = { email: email, role: email === "admin@gmail.com" ? "admin" : "user" };
-        mod.salvarUsuario(user);
-      }
-      mod.setUsuarioAtual(user);
-    });
-    msg.textContent = "Login OK!";
-    msg.style.color = "green";
-    setTimeout(() => window.location.href = "home.html", 1000);
-  } catch (e) {
-    msg.textContent = traduzirErro(e.code);
-    msg.style.color = "red";
-  }
-});
-
 // ================= CADASTRO =================
 document.getElementById("btnCadastro").addEventListener("click", async () => {
-  const nome = document.getElementById("cadastroNome").value.trim();
-  const telefone = document.getElementById("cadastroTelefone").value.trim();
   const email = document.getElementById("cadastroEmail").value.trim();
   const senha = document.getElementById("cadastroSenha").value.trim();
-  const confirma = document.getElementById("cadastroConfirmarSenha").value.trim();
+  const confirmacao = document.getElementById("cadastroConfirmarSenha").value.trim();
 
-  if (!nome || !email || !senha || !confirma) {
-    msg.textContent = "Preencha todos os campos obrigatórios.";
+  if (!email || !senha || !confirmacao) {
+    msg.textContent = "Preencha todos os campos.";
     msg.style.color = "red";
     return;
   }
-
-  if (!validarEmail(email)) {
+  if (!emailValido(email)) {
     msg.textContent = "Formato de email inválido.";
     msg.style.color = "red";
     return;
   }
-
-  if (!validarSenhaForte(senha)) {
-    msg.textContent = "A senha deve ter no mínimo 8 caracteres, com letras e números.";
+  if (senha !== confirmacao) {
+    msg.textContent = "As senhas não coincidem.";
     msg.style.color = "red";
     return;
   }
-
-  if (senha !== confirma) {
-    msg.textContent = "As senhas não conferem.";
+  if (!senhaForte(senha)) {
+    msg.textContent = "A senha precisa ter no mínimo 6 caracteres, incluindo letra maiúscula, minúscula e número.";
     msg.style.color = "red";
     return;
   }
 
   try {
-    await createUserWithEmailAndPassword(auth, email, senha);
-    const usuario = {
-      email: email,
-      role: email === "admin@gmail.com" ? "admin" : "user",
-      nome: nome,
-      telefone: telefone
-    };
-    import("./usuarios.js").then(mod => {
-      mod.salvarUsuario(usuario);
-      mod.setUsuarioAtual(usuario);
-    });
-    msg.textContent = "Conta criada com sucesso!";
+    const userCredential = await createUserWithEmailAndPassword(auth, email, senha);
+    // Enviar email de verificação
+    await sendEmailVerification(userCredential.user);
+    await sincronizarUsuarioLocal(userCredential.user);
+    msg.textContent = "Conta criada! Verifique seu email. Redirecionando...";
     msg.style.color = "green";
+    setTimeout(() => window.location.href = "home.html", 1500);
   } catch (e) {
     msg.textContent = traduzirErro(e.code);
     msg.style.color = "red";
   }
 });
+
+// ================= SINCRONIZAR USUÁRIO LOCAL =================
+async function sincronizarUsuarioLocal(firebaseUser) {
+  const email = firebaseUser.email;
+  try {
+    const modulo = await import("./usuarios.js");
+    let user = modulo.buscarUsuario(email);
+    if (!user) {
+      user = {
+        email: email,
+        role: email === "admin@gmail.com" ? "admin" : "user"
+      };
+      modulo.salvarUsuario(user);
+    }
+    modulo.setUsuarioAtual(user);
+  } catch (e) {
+    console.warn("Erro ao sincronizar usuário local", e);
+  }
+}

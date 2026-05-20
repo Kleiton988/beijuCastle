@@ -1,9 +1,5 @@
 /* ================= RESET GERAL ================= */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin:0; padding:0; box-sizing:border-box; }
 
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -14,6 +10,28 @@ body {
   flex-direction: column;
   align-items: center;
   padding: 20px;
+  position: relative; /* para o botão no topo */
+}
+
+/* ================= BOTÃO VOLTAR (TOPO ESQUERDO) ================= */
+.btn-voltar-topo {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  background: #fff;
+  border: 2px solid #e0c29b;
+  padding: 8px 18px;
+  border-radius: 20px;
+  font-weight: bold;
+  color: #5e3a1c;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.btn-voltar-topo:hover {
+  background: #f4c069;
+  border-color: #b45f2a;
+  transform: translateY(-2px);
 }
 
 /* ================= CABEÇALHO DO PERFIL ================= */
@@ -26,6 +44,7 @@ h2#email {
   margin-bottom: 25px;
   font-size: 1.2rem;
   border: 1px solid #f1d9b3;
+  margin-top: 60px; /* espaço para o botão */
 }
 
 /* ================= FORMULÁRIO DE DADOS ================= */
@@ -46,11 +65,12 @@ input {
   font-size: 1rem;
   transition: 0.3s;
 }
-
 input:focus {
   border-color: #b45f2a;
   box-shadow: 0 0 10px rgba(180, 95, 42, 0.2);
 }
+/* Telefone: sem spinner no Firefox */
+input[type="number"] { -moz-appearance: textfield; }
 
 button {
   background: #f4c069;
@@ -65,7 +85,6 @@ button {
   margin: 8px 4px;
   box-shadow: 0 4px 10px rgba(0,0,0,0.06);
 }
-
 button:hover {
   background: #e0a84c;
   color: #fff;
@@ -79,7 +98,6 @@ button:hover {
   max-width: 650px;
   margin-top: 30px;
 }
-
 #pedidos > div {
   background: #ffffff;
   border-radius: 20px;
@@ -91,16 +109,13 @@ button:hover {
   font-size: 0.95rem;
   line-height: 1.6;
 }
-
 #pedidos > div:hover {
   transform: scale(1.01);
   box-shadow: 0 12px 28px rgba(0,0,0,0.08);
 }
-
 #pedidos strong {
   color: #b45f2a;
 }
-
 #pedidos hr {
   border: none;
   border-top: 1px dashed #e0c29b;
@@ -115,17 +130,6 @@ button:hover {
   padding: 12px 24px !important;
 }
 
-/* ================= BOTÃO VOLTAR ================= */
-button:last-of-type {
-  background: #e0c29b;
-  margin-top: 20px;
-}
-
-button:last-of-type:hover {
-  background: #b45f2a;
-  color: #fff;
-}
-
 /* ================= RESPONSIVO ================= */
 @media (max-width: 500px) {
   input {
@@ -133,5 +137,11 @@ button:last-of-type:hover {
   }
   #pedidos {
     max-width: 100%;
+  }
+  .btn-voltar-topo {
+    top: 10px;
+    left: 10px;
+    font-size: 0.9rem;
+    padding: 6px 14px;
   }
 }

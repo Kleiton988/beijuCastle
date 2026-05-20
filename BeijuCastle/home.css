@@ -1,9 +1,5 @@
 /* ================= RESET GERAL ================= */
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+* { margin:0; padding:0; box-sizing:border-box; }
 
 body.home {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -32,21 +28,19 @@ header.topo {
   z-index: 1000;
   border-bottom: 4px solid #f4c069;
 }
-
 header.topo h1 {
   font-size: 2rem;
   letter-spacing: 1px;
   text-shadow: 2px 2px 0 #964d1e;
   margin-right: auto;
 }
-
 header.topo p#userEmail {
-  font-size: 0.9rem;
+  font-size: 1rem;               /* aumentado */
+  font-weight: 600;
   background: rgba(255,255,255,0.2);
   padding: 6px 14px;
   border-radius: 20px;
 }
-
 header.topo button {
   background: #fef3e4;
   border: none;
@@ -59,11 +53,20 @@ header.topo button {
   box-shadow: 0 2px 6px rgba(0,0,0,0.1);
   font-size: 0.9rem;
 }
-
 header.topo button:hover {
   background: #fff;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+#carrinhoBadge {
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 8px;
+  font-size: 0.8rem;
+  margin-left: 5px;
+  font-weight: bold;
 }
 
 /* ================= CATEGORIAS ================= */
@@ -74,7 +77,6 @@ header.topo button:hover {
   gap: 8px;
   margin: 25px 0 10px;
 }
-
 .cat-btn {
   background: #fff;
   border: 2px solid #e0c29b;
@@ -86,9 +88,7 @@ header.topo button:hover {
   transition: all 0.3s ease;
   font-size: 0.9rem;
 }
-
-.cat-btn.ativo,
-.cat-btn:hover {
+.cat-btn.ativo, .cat-btn:hover {
   background: #f4c069;
   border-color: #b45f2a;
   color: #3d2815;
@@ -96,26 +96,50 @@ header.topo button:hover {
 }
 
 /* ================= BUSCA ================= */
-#busca {
+.busca-wrapper {
+  position: relative;
+  display: inline-block;
   width: 60%;
   max-width: 450px;
-  padding: 12px 20px;
+}
+.busca-wrapper input {
+  width: 100%;
+  padding: 12px 45px 12px 20px;
   border: 2px solid #e0c29b;
   border-radius: 30px;
   font-size: 1rem;
   outline: none;
   background: #fffaf3;
   transition: 0.3s;
-  margin: 0 auto 20px;
-  display: block;
 }
-
-#busca:focus {
+.busca-wrapper input:focus {
   border-color: #b45f2a;
   box-shadow: 0 0 10px rgba(180, 95, 42, 0.2);
 }
+.lupa {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #b45f2a;
+  pointer-events: none;
+}
+.limpar-busca {
+  position: absolute;
+  right: 38px;          /* ao lado da lupa */
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.2rem;
+  color: #b45f2a;
+  cursor: pointer;
+  font-weight: bold;
+}
+.limpar-busca:hover {
+  color: #e74c3c;
+}
 
-/* ================= CONTAINER PRINCIPAL (DUAS COLUNAS) ================= */
+/* ================= CONTAINER PRINCIPAL ================= */
 .conteudo-principal {
   display: flex;
   justify-content: center;
@@ -125,15 +149,12 @@ header.topo button:hover {
   max-width: 1300px;
   margin: 10px auto 30px;
 }
-
-/* ================= CARDÁPIO (COLUNA ESQUERDA) ================= */
 main.cardapio {
   flex: 1;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
   gap: 25px;
 }
-
 .item {
   background: #ffffff;
   border-radius: 20px;
@@ -145,78 +166,26 @@ main.cardapio {
   position: relative;
   overflow: hidden;
 }
-
 .item:hover {
   transform: translateY(-6px);
   box-shadow: 0 14px 28px rgba(0,0,0,0.1);
   border-color: #f4c069;
 }
-
-.item h2 {
-  font-size: 1.3rem;
-  color: #5e3a1c;
-  margin-bottom: 8px;
+.item h2 { font-size: 1.3rem; color: #5e3a1c; margin-bottom: 8px; }
+.preco { display: block; font-size: 1.4rem; font-weight: bold; color: #b45f2a; margin: 10px 0; }
+.avaliacao { margin: 10px 0; font-size: 0.9rem; color: #7a5c3e; }
+.estrela-clicavel { font-size: 1.4rem; transition: transform 0.2s; cursor:pointer; }
+.estrela-clicavel:hover { transform: scale(1.3); }
+.media-nota { font-size: 0.85rem; color: #b49b7b; }
+.btn-add, .btn-fav {
+  background: #f4c069; border: none; padding: 8px 16px; border-radius: 20px;
+  cursor: pointer; font-weight: bold; color: #3d2815; transition: 0.2s; margin: 5px; font-size: 0.9rem;
 }
+.btn-add:hover { background: #e0a84c; color: #fff; }
+.btn-fav { background: transparent; border: 2px solid #f4c069; font-size: 1.2rem; padding: 4px 10px; }
+.btn-fav:hover { background: #f4c069; }
 
-.preco {
-  display: block;
-  font-size: 1.4rem;
-  font-weight: bold;
-  color: #b45f2a;
-  margin: 10px 0;
-}
-
-.avaliacao {
-  margin: 10px 0;
-  font-size: 0.9rem;
-  color: #7a5c3e;
-}
-
-.sua-nota .estrela-clicavel {
-  font-size: 1.4rem;
-  transition: transform 0.2s;
-}
-
-.estrela-clicavel:hover {
-  transform: scale(1.3);
-}
-
-.media-nota {
-  font-size: 0.85rem;
-  color: #b49b7b;
-}
-
-.btn-add,
-.btn-fav {
-  background: #f4c069;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 20px;
-  cursor: pointer;
-  font-weight: bold;
-  color: #3d2815;
-  transition: 0.2s;
-  margin: 5px;
-  font-size: 0.9rem;
-}
-
-.btn-add:hover {
-  background: #e0a84c;
-  color: #fff;
-}
-
-.btn-fav {
-  background: transparent;
-  border: 2px solid #f4c069;
-  font-size: 1.2rem;
-  padding: 4px 10px;
-}
-
-.btn-fav:hover {
-  background: #f4c069;
-}
-
-/* ================= CARRINHO LATERAL (COLUNA DIREITA) ================= */
+/* ================= CARRINHO LATERAL ================= */
 aside.carrinho {
   width: 320px;
   background: #fffaf2;
@@ -225,62 +194,53 @@ aside.carrinho {
   box-shadow: 0 8px 25px rgba(0,0,0,0.08);
   border: 1px solid #f1d9b3;
   position: sticky;
-  top: 130px;     /* acompanha a rolagem sem sobrepor */
+  top: 130px;
   max-height: 80vh;
   overflow-y: auto;
   flex-shrink: 0;
 }
-
 aside.carrinho h2 {
-  font-size: 1.3rem;
-  color: #5e3a1c;
-  margin: 15px 0 8px;
-  border-bottom: 2px dashed #e0c29b;
-  padding-bottom: 6px;
+  font-size: 1.3rem; color: #5e3a1c; margin: 15px 0 8px;
+  border-bottom: 2px dashed #e0c29b; padding-bottom: 6px;
 }
-
-#listaCarrinho div,
-#favoritos div {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px dotted #e0c29b;
-  font-size: 0.95rem;
+#listaCarrinho div, #favoritos div {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 0; border-bottom: 1px dotted #e0c29b; font-size: 0.95rem;
 }
-
-#listaCarrinho button,
 aside.carrinho button {
-  background: #f4c069;
-  border: none;
-  color: #3d2815;
-  padding: 4px 10px;
-  border-radius: 15px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-left: 5px;
-  transition: all 0.2s;
+  background: #f4c069; border: none; color: #3d2815; padding: 4px 10px;
+  border-radius: 15px; cursor: pointer; font-weight: bold; margin-left: 5px; transition: all 0.2s;
 }
+aside.carrinho button:hover { background: #b45f2a; color: white; }
+#cupom { width: 100%; padding: 10px; border: 2px solid #e0c29b; border-radius: 15px; margin: 10px 0; background: #fffaf3; }
+#total { font-size: 1.2rem; font-weight: bold; color: #5e3a1c; margin: 15px 0; }
 
-aside.carrinho button:hover {
-  background: #b45f2a;
-  color: white;
+/* ================= MODAL ================= */
+.modal {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
 }
-
-#cupom {
-  width: 100%;
-  padding: 10px;
-  border: 2px solid #e0c29b;
-  border-radius: 15px;
-  margin: 10px 0;
+.modal-content {
   background: #fffaf3;
+  padding: 30px;
+  border-radius: 20px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.3);
 }
-
-#total {
-  font-size: 1.2rem;
+.modal-content button {
+  margin: 10px;
+  padding: 10px 25px;
+  border-radius: 25px;
   font-weight: bold;
-  color: #5e3a1c;
-  margin: 15px 0;
+  cursor: pointer;
 }
 
 /* ================= MENSAGEM FLUTUANTE ================= */
@@ -291,92 +251,8 @@ aside.carrinho button:hover {
 
 /* ================= RESPONSIVO ================= */
 @media (max-width: 900px) {
-  .conteudo-principal {
-    flex-direction: column;
-    align-items: center;
-  }
-
-  aside.carrinho {
-    width: 90%;
-    position: static;
-    max-height: none;
-    margin: 20px 0;
-  }
-
-  main.cardapio {
-    width: 95%;
-    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  }
-
-  header.topo {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-/* Adições para novas funcionalidades */
-.produto-img {
-  width: 100%;
-  height: 150px;
-  object-fit: cover;
-  border-radius: 15px;
-  margin-bottom: 10px;
-}
-
-.descricao {
-  font-size: 0.85rem;
-  color: #666;
-  margin: 5px 0;
-}
-
-.destaque {
-  background: yellow;
-  font-weight: bold;
-}
-
-.badge {
-  background: #e74c3c;
-  color: white;
-  border-radius: 50%;
-  padding: 2px 8px;
-  font-size: 0.8rem;
-  margin-right: 5px;
-}
-
-.header-right {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.busca-wrapper {
-  position: relative;
-  display: inline-block;
-}
-
-.sugestoes {
-  position: absolute;
-  background: white;
-  border: 1px solid #ccc;
-  width: 100%;
-  z-index: 10;
-  display: none;
-}
-
-.sugestao {
-  padding: 8px;
-  cursor: pointer;
-}
-
-.sugestao:hover {
-  background: #f0e0cc;
-}
-
-/* Modal de pagamento */
-#modalPagamento button {
-  margin: 5px;
-  padding: 10px 20px;
-  background: #f4c069;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
+  .conteudo-principal { flex-direction: column; align-items: center; }
+  aside.carrinho { width: 90%; position: static; max-height: none; margin: 20px 0; }
+  main.cardapio { width: 95%; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); }
+  header.topo { flex-direction: column; align-items: flex-start; }
 }

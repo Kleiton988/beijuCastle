@@ -6,11 +6,14 @@
   <link rel="stylesheet" href="perfil.css">
 </head>
 <body>
+  <!-- Botão voltar no topo (lado esquerdo) -->
+  <button onclick="voltarHome()" class="btn-voltar-topo">⬅ Voltar para Home</button>
+
   <h2 id="email"></h2>
 
   <h3>Dados do usuário</h3>
   <input id="nome" placeholder="Nome">
-  <input id="telefone" placeholder="Telefone">
+  <input id="telefone" placeholder="Telefone (apenas números)" inputmode="numeric" pattern="[0-9]*" maxlength="11" title="Digite apenas números (DDD + número)">
   <input id="endereco" placeholder="Endereço">
   <button onclick="salvarPerfil()">Salvar</button>
 
@@ -27,9 +30,6 @@
     padding: 10px;
     display: none;
   "></div>
-
-  <!-- Botão de voltar (adicionei) -->
-  <button onclick="voltarHome()" style="margin-top:20px;">Voltar para Home</button>
 
   <script type="module" src="perfil.js"></script>
 </body>

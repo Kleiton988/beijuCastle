@@ -5,63 +5,62 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>BeijúCastle 🫓</title>
   <link rel="stylesheet" href="style.css">
+  <!-- Firebase -->
   <script type="module" src="firebase.js"></script>
   <script type="module" src="script.js" defer></script>
 </head>
 <body>
-  <div class="login-wrapper">
-    <div class="logo-area">
-      <span class="logo-icon">🫓</span>
-      <h1>BeijúCastle</h1>
-      <p>Peça os melhores beijús da região!</p>
-    </div>
-
+  <div class="container">
     <div class="card">
-      <div class="tab-buttons">
-        <button id="tabLogin" class="tab active">Entrar</button>
-        <button id="tabCadastro" class="tab">Criar conta</button>
+
+      <h1>BeijúCastle 🫓</h1>
+      <p>Delícias da fazenda direto para você</p>
+
+      <!-- Abas -->
+      <div class="abas">
+        <button id="abaLogin" class="aba ativa">Login</button>
+        <button id="abaCadastro" class="aba">Criar Conta</button>
       </div>
 
-      <!-- Formulário de Login -->
-      <form id="formLogin" class="form-section active">
-        <label for="loginEmail">Email</label>
+      <!-- Painel Login -->
+      <div id="painelLogin">
+        <label for="loginEmail">Email:</label>
         <input type="email" id="loginEmail" placeholder="Digite seu email" maxlength="254">
 
-        <label for="loginSenha">Senha</label>
+        <label for="loginSenha">Senha:</label>
         <div class="senha-wrapper">
-          <input type="password" id="loginSenha" placeholder="Digite sua senha">
-          <button type="button" class="toggle-senha" data-target="loginSenha">👁️</button>
+          <input type="password" id="loginSenha" placeholder="Digite sua senha" maxlength="128">
+          <span class="toggle-senha" data-alvo="loginSenha">👁️</span>
         </div>
 
-        <button type="button" id="btnLogin">Entrar</button>
-        <button type="button" id="btnGoogleLogin" class="google-btn">Entrar com Google</button>
-        <a href="#" id="linkEsqueciSenha">Esqueci minha senha</a>
-      </form>
+        <button id="btnLogin">Entrar</button>
+        <button id="btnGoogle" class="google-btn">Entrar com Google</button>
+        <button id="btnEsqueciSenha" class="link-btn">Esqueci minha senha</button>
+      </div>
 
-      <!-- Formulário de Cadastro -->
-      <form id="formCadastro" class="form-section">
-        <label for="cadastroNome">Nome</label>
-        <input type="text" id="cadastroNome" placeholder="Seu nome completo" maxlength="50">
-
-        <label for="cadastroTelefone">Telefone</label>
-        <input type="tel" id="cadastroTelefone" placeholder="(DDD) 9XXXX-XXXX" maxlength="15">
-
-        <label for="cadastroEmail">Email</label>
+      <!-- Painel Cadastro -->
+      <div id="painelCadastro" style="display:none;">
+        <label for="cadastroEmail">Email:</label>
         <input type="email" id="cadastroEmail" placeholder="Digite seu email" maxlength="254">
 
-        <label for="cadastroSenha">Senha</label>
+        <label for="cadastroSenha">Senha:</label>
         <div class="senha-wrapper">
-          <input type="password" id="cadastroSenha" placeholder="Crie uma senha forte">
-          <button type="button" class="toggle-senha" data-target="cadastroSenha">👁️</button>
+          <input type="password" id="cadastroSenha" placeholder="Crie uma senha" maxlength="128">
+          <span class="toggle-senha" data-alvo="cadastroSenha">👁️</span>
         </div>
 
-        <label for="cadastroConfirmarSenha">Confirmar senha</label>
-        <input type="password" id="cadastroConfirmarSenha" placeholder="Repita a senha">
+        <label for="cadastroConfirmarSenha">Confirmar senha:</label>
+        <div class="senha-wrapper">
+          <input type="password" id="cadastroConfirmarSenha" placeholder="Repita a senha" maxlength="128">
+          <span class="toggle-senha" data-alvo="cadastroConfirmarSenha">👁️</span>
+        </div>
 
-        <button type="button" id="btnCadastro">Cadastrar</button>
-      </form>
+        <button id="btnCadastro">Cadastrar</button>
+      </div>
 
-      <p id="mensagem"></p>
+      <!-- Mensagem de erro/sucesso -->
+      <p id="mensagem" style="margin-top:10px; font-size:14px;"></p>
+
     </div>
   </div>
 </body>
