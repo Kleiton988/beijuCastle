@@ -15,21 +15,22 @@ const state = {
   cupom: { codigo: null, desconto: 0, aplicado: false, freteGratis: false },
   categoriaAtiva: "todos",
   termoBusca: "",
-  freteTipo: "entrega"
+  freteTipo: "entrega",
+  historicoBuscas: JSON.parse(localStorage.getItem("historicoBuscas")) || []
 };
 
 const FRETE_PADRAO = 5.00;
 
-// ================= PRODUTOS (8) =================
+// ================= PRODUTOS (com descrição e imagem) =================
 const PRODUTOS = [
-  { nome: "Beijú Tradicional", preco: 5, categoria: "tradicional" },
-  { nome: "Beijú Queijo", preco: 7, categoria: "recheado" },
-  { nome: "Beijú Doce", preco: 8, categoria: "doce" },
-  { nome: "Beijú Carne Seca", preco: 10, categoria: "recheado" },
-  { nome: "Beijú Frango", preco: 9, categoria: "recheado" },
-  { nome: "Beijú Chocolate", preco: 8, categoria: "doce" },
-  { nome: "Beijú Nutella", preco: 12, categoria: "especial" },
-  { nome: "Beijú Vegano", preco: 9, categoria: "especial" }
+  { nome: "Beijú Tradicional", preco: 5, categoria: "tradicional", img: "img/tradicional.jpg", desc: "Massa fina, recheio de coco e queijo coalho." },
+  { nome: "Beijú Queijo", preco: 7, categoria: "recheado", img: "img/queijo.jpg", desc: "Queijo mussarela derretido na massa de tapioca." },
+  { nome: "Beijú Doce", preco: 8, categoria: "doce", img: "img/doce.jpg", desc: "Goiabada cremosa com coco ralado." },
+  { nome: "Beijú Carne Seca", preco: 10, categoria: "recheado", img: "img/carneseca.jpg", desc: "Carne seca desfiada com cebola roxa." },
+  { nome: "Beijú Frango", preco: 9, categoria: "recheado", img: "img/frango.jpg", desc: "Frango desfiado temperado com catupiry." },
+  { nome: "Beijú Chocolate", preco: 8, categoria: "doce", img: "img/chocolate.jpg", desc: "Chocolate ao leite com morangos." },
+  { nome: "Beijú Nutella", preco: 12, categoria: "especial", img: "img/nutella.jpg", desc: "Nutella pura com banana fatiada." },
+  { nome: "Beijú Vegano", preco: 9, categoria: "especial", img: "img/vegano.jpg", desc: "Tapioca com pasta de amendoim e frutas." }
 ];
 
 // ================= CUPONS =================
@@ -39,7 +40,7 @@ const CUPONS = {
   "FRETEGRATIS": { desconto: 0, minimo: 30, tipo: "fretegratis" }
 };
 
-// ================= INIT =================
+// ================= INICIALIZAÇÃO =================
 onAuthStateChanged(auth, (user) => {
   if (user) {
     state.usuario = user;
@@ -57,6 +58,8 @@ onAuthStateChanged(auth, (user) => {
     renderAll();
     carregarUltimosPedidos();
     configurarCategorias();
+    atualizarContadorCarrinho();
+    exibirHistoricoBuscas();
   } else {
     window.location.href = "index.html";
   }
@@ -85,22 +88,58 @@ function configurarCategorias() {
   });
 }
 
-// ================= BUSCA E FILTROS =================
+// ================= BUSCA (com histórico e sugestões) =================
+const buscaInput = document.getElementById("busca");
 window.aplicarFiltros = () => {
-  const termo = document.getElementById("busca").value.toLowerCase().trim();
+  const termo = buscaInput.value.toLowerCase().trim();
   state.termoBusca = termo;
   renderCardapio();
+  if (termo) {
+    salvarHistoricoBusca(termo);
+  }
 };
 
-function obterProdutosFiltrados() {
-  return PRODUTOS.filter(prod => {
-    const catOk = state.categoriaAtiva === "todos" || prod.categoria === state.categoriaAtiva;
-    const nomeOk = prod.nome.toLowerCase().includes(state.termoBusca);
-    return catOk && nomeOk;
-  });
+function salvarHistoricoBusca(termo) {
+  if (!state.historicoBuscas.includes(termo)) {
+    state.historicoBuscas.unshift(termo);
+    if (state.historicoBuscas.length > 10) state.historicoBuscas.pop();
+    localStorage.setItem("historicoBuscas", JSON.stringify(state.historicoBuscas));
+  }
 }
 
-// ================= RENDER CARDÁPIO (COM AVALIAÇÕES) =================
+function exibirHistoricoBuscas() {
+  // não precisa exibir, só armazenamos para futura referência
+}
+
+// Sugestões automáticas (dropdown)
+buscaInput.addEventListener("input", () => {
+  const termo = buscaInput.value.toLowerCase().trim();
+  const sugestoesDiv = document.getElementById("sugestoesBusca");
+  if (!sugestoesDiv) return;
+  if (termo.length < 2) {
+    sugestoesDiv.innerHTML = "";
+    sugestoesDiv.style.display = "none";
+    return;
+  }
+  const sugestoes = PRODUTOS.filter(p => p.nome.toLowerCase().includes(termo)).slice(0, 5);
+  if (sugestoes.length === 0) {
+    sugestoesDiv.innerHTML = "";
+    sugestoesDiv.style.display = "none";
+  } else {
+    sugestoesDiv.innerHTML = sugestoes.map(p => `<div class="sugestao" data-nome="${p.nome}">${p.nome}</div>`).join("");
+    sugestoesDiv.style.display = "block";
+  }
+});
+
+document.addEventListener("click", (e) => {
+  if (e.target.classList.contains("sugestao")) {
+    buscaInput.value = e.target.dataset.nome;
+    document.getElementById("sugestoesBusca").style.display = "none";
+    aplicarFiltros();
+  }
+});
+
+// ================= RENDER CARDÁPIO (com imagens, descrição, destaque) =================
 function renderCardapio() {
   const container = document.getElementById("cardapioContainer");
   if (!container) return;
@@ -120,32 +159,39 @@ function renderCardapio() {
     const div = document.createElement("div");
     div.className = "item";
 
-    const estrelasHTML = gerarEstrelasInterativas(prod.nome, minhaNota);
-    const mediaHTML = media > 0 ? ` Média: ${gerarEstrelasFixas(media)} (${media.toFixed(1)})` : " Sem avaliações";
+    const nomeDestacado = state.termoBusca
+      ? prod.nome.replace(new RegExp(`(${state.termoBusca})`, 'gi'), '<span class="destaque">$1</span>')
+      : prod.nome;
 
     div.innerHTML = `
-      <h2>${prod.nome}</h2>
+      <img src="${prod.img}" alt="${prod.nome}" class="produto-img" onerror="this.src='img/back.jpg'">
+      <h2>${nomeDestacado}</h2>
+      <p class="descricao">${prod.desc}</p>
       <span class="preco">R$ ${prod.preco.toFixed(2)}</span>
       <div class="avaliacao">
-        <div class="sua-nota">Sua nota: ${estrelasHTML}</div>
-        <div class="media-nota">${mediaHTML}</div>
+        <div class="sua-nota">Sua nota: ${gerarEstrelasInterativas(prod.nome, minhaNota)}</div>
+        <div class="media-nota">${media > 0 ? `Média: ${gerarEstrelasFixas(media)} (${media.toFixed(1)})` : "Sem avaliações"}</div>
       </div>
       <button class="btn-add" data-nome="${prod.nome}" data-preco="${prod.preco}">Adicionar</button>
       <button class="btn-fav" data-nome="${prod.nome}" data-preco="${prod.preco}">⭐</button>
     `;
 
-    div.querySelector(".btn-add").addEventListener("click", () => {
-      window.addCarrinho(prod.nome, prod.preco);
-    });
-
-    div.querySelector(".btn-fav").addEventListener("click", () => {
-      window.toggleFavorito(prod.nome, prod.preco);
-    });
+    div.querySelector(".btn-add").addEventListener("click", () => window.addCarrinho(prod.nome, prod.preco));
+    div.querySelector(".btn-fav").addEventListener("click", () => window.toggleFavorito(prod.nome, prod.preco));
 
     container.appendChild(div);
   });
 }
 
+function obterProdutosFiltrados() {
+  return PRODUTOS.filter(prod => {
+    const catOk = state.categoriaAtiva === "todos" || prod.categoria === state.categoriaAtiva;
+    const nomeOk = prod.nome.toLowerCase().includes(state.termoBusca);
+    return catOk && nomeOk;
+  });
+}
+
+// ================= ESTRELAS (mantido) =================
 function gerarEstrelasInterativas(produtoNome, notaAtual) {
   let html = "";
   for (let i = 1; i <= 5; i++) {
@@ -167,13 +213,11 @@ function gerarEstrelasFixas(media) {
   return estrelas;
 }
 
-// ================= TRATAMENTO DE CLIQUE NA AVALIAÇÃO (REMOVER) =================
 document.addEventListener("click", (e) => {
   if (e.target.classList.contains("estrela-clicavel")) {
     const produto = e.target.dataset.produto;
     const nota = parseInt(e.target.dataset.nota);
     if (!state.usuario || !produto || isNaN(nota)) return;
-
     const notaAnterior = obterAvaliacaoUsuario(produto, state.usuario.email);
     if (nota === notaAnterior) {
       removerAvaliacao(produto, state.usuario.email);
@@ -184,13 +228,14 @@ document.addEventListener("click", (e) => {
   }
 });
 
-// ================= CARRINHO =================
+// ================= CARRINHO (com contador) =================
 window.addCarrinho = (nome, preco) => {
   const item = state.carrinho.find(i => i.nome === nome);
   if (item) item.qtd++;
   else state.carrinho.push({ nome, preco, qtd: 1 });
   salvarCarrinho();
   renderCarrinho();
+  atualizarContadorCarrinho();
 };
 
 window.mudarQtd = (i, tipo) => {
@@ -200,6 +245,7 @@ window.mudarQtd = (i, tipo) => {
   if (item.qtd <= 0) state.carrinho.splice(i, 1);
   salvarCarrinho();
   renderCarrinho();
+  atualizarContadorCarrinho();
 };
 
 window.limparCarrinho = () => {
@@ -208,9 +254,16 @@ window.limparCarrinho = () => {
     state.carrinho = [];
     salvarCarrinho();
     renderCarrinho();
+    atualizarContadorCarrinho();
     mostrarMensagem("Carrinho limpo", "sucesso");
   }
 };
+
+function atualizarContadorCarrinho() {
+  const totalItens = state.carrinho.reduce((t, i) => t + i.qtd, 0);
+  const badge = document.getElementById("contadorCarrinho");
+  if (badge) badge.textContent = totalItens;
+}
 
 // ================= FRETE =================
 window.alternarFrete = (tipo) => {
@@ -224,20 +277,19 @@ function calcularFrete() {
   return FRETE_PADRAO;
 }
 
-// ================= CUPOM =================
+// ================= CUPOM (com mensagem ao remover sem cupom) =================
 window.aplicarCupom = () => {
   const input = document.getElementById("cupom");
   const codigo = input.value.trim().toUpperCase();
 
   if (state.carrinho.length === 0) return mostrarMensagem("Adicione itens antes do cupom", "erro");
   if (!CUPONS[codigo]) return mostrarMensagem("Cupom inválido", "erro");
+  if (state.cupom.aplicado) return mostrarMensagem("Já existe um cupom aplicado. Remova-o primeiro.", "erro");
 
   const subtotal = calcularSubtotal();
   if (subtotal < CUPONS[codigo].minimo) {
     return mostrarMensagem(`Valor mínimo para este cupom: R$ ${CUPONS[codigo].minimo.toFixed(2)}`, "erro");
   }
-
-  if (state.cupom.aplicado) return mostrarMensagem("Já existe um cupom aplicado. Remova-o primeiro.", "erro");
 
   const cupomInfo = CUPONS[codigo];
   state.cupom = {
@@ -252,29 +304,33 @@ window.aplicarCupom = () => {
 };
 
 window.removerCupom = () => {
+  if (!state.cupom.aplicado) {
+    mostrarMensagem("Nenhum cupom aplicado para remover.", "erro");
+    return;
+  }
   state.cupom = { codigo: null, desconto: 0, aplicado: false, freteGratis: false };
   mostrarMensagem("Cupom removido", "sucesso");
   renderCarrinho();
 };
 
-// ================= FINALIZAR PEDIDO (COM NOME E ENDEREÇO ATUAIS) =================
+// ================= FINALIZAR (validação de dados) =================
 window.finalizarPedido = () => {
   if (state.carrinho.length === 0) return mostrarMensagem("Carrinho vazio", "erro");
   if (!state.usuario) return mostrarMensagem("Usuário não autenticado", "erro");
 
+  const dadosUsuario = buscarUsuario(state.usuario.email);
+  if (!dadosUsuario?.endereco || !dadosUsuario?.nome) {
+    mostrarMensagem("Complete seu perfil (nome e endereço) antes de finalizar o pedido.", "erro");
+    return;
+  }
+
   if (!confirm("Deseja realmente finalizar o pedido?")) return;
 
   const resumo = calcularResumo();
-
-  // 🔍 Busca sempre os dados mais recentes do perfil (resolve ID 61)
-  const dadosUsuario = buscarUsuario(state.usuario.email);
-  const nomeCliente = dadosUsuario?.nome || "Não informado";
-  const enderecoCliente = dadosUsuario?.endereco || "Não informado";
-
   const pedido = {
     id: Date.now(),
     usuario: state.usuario.email,
-    nomeCliente: nomeCliente,               // ✅ Adicionado (ID 28)
+    nomeCliente: dadosUsuario.nome,
     itens: [...state.carrinho],
     subtotal: resumo.subtotal,
     desconto: resumo.descontoValor,
@@ -282,22 +338,43 @@ window.finalizarPedido = () => {
     total: resumo.total,
     cupom: state.cupom.codigo,
     tipoFrete: state.freteTipo,
-    endereco: enderecoCliente,             // ✅ Endereço mais recente
+    endereco: dadosUsuario.endereco,
     status: "pendente",
     data: new Date().toLocaleString()
   };
 
   salvarPedido(pedido);
-  mostrarMensagem("Pedido finalizado com sucesso!", "sucesso");
-
-  state.carrinho = [];
-  state.cupom = { codigo: null, desconto: 0, aplicado: false, freteGratis: false };
-  state.freteTipo = "entrega";
-  document.getElementById("cupom").value = "";
-  salvarCarrinho();
-  renderAll();
-  carregarUltimosPedidos();
+  abrirModalPagamento(pedido);
 };
+
+// ================= MODAL DE PAGAMENTO (simples) =================
+function abrirModalPagamento(pedido) {
+  const modal = document.getElementById("modalPagamento");
+  if (!modal) return;
+  document.getElementById("modalTotal").textContent = `Total: R$ ${pedido.total.toFixed(2)}`;
+  modal.style.display = "flex";
+
+  window.confirmarPagamento = (forma) => {
+    pedido.formaPagamento = forma;
+    pedido.status = "pago";
+    salvarPedido(pedido); // atualiza status
+    modal.style.display = "none";
+    mostrarMensagem(`Pedido finalizado! Pagamento via ${forma}.`, "sucesso");
+
+    state.carrinho = [];
+    state.cupom = { codigo: null, desconto: 0, aplicado: false, freteGratis: false };
+    state.freteTipo = "entrega";
+    document.getElementById("cupom").value = "";
+    salvarCarrinho();
+    renderAll();
+    atualizarContadorCarrinho();
+  };
+
+  window.cancelarPagamento = () => {
+    modal.style.display = "none";
+    mostrarMensagem("Pagamento cancelado. Pedido continua pendente.", "erro");
+  };
+}
 
 // ================= FAVORITOS =================
 window.toggleFavorito = (nome, preco) => {
@@ -326,7 +403,6 @@ function renderCarrinho() {
   const lista = document.getElementById("listaCarrinho");
   const totalEl = document.getElementById("total");
   if (!lista || !totalEl) return;
-
   lista.innerHTML = "";
   state.carrinho.forEach((item, i) => {
     const div = document.createElement("div");
@@ -337,28 +413,17 @@ function renderCarrinho() {
     `;
     lista.appendChild(div);
   });
-
   const r = calcularResumo();
-  let resumoHTML = `Subtotal: R$ ${r.subtotal.toFixed(2)}<br>`;
-  if (state.cupom.aplicado && state.cupom.desconto > 0) {
-    resumoHTML += `Desconto (${state.cupom.codigo}): -R$ ${r.descontoValor.toFixed(2)}<br>`;
-  }
-  resumoHTML += `Frete: R$ ${r.frete.toFixed(2)}`;
-  if (state.cupom.freteGratis && r.frete === 0 && state.freteTipo === "entrega") {
-    resumoHTML += ` (Frete Grátis!)`;
-  }
-  resumoHTML += `<br><strong>Total: R$ ${r.total.toFixed(2)}</strong>`;
-
-  totalEl.innerHTML = resumoHTML;
+  let html = `Subtotal: R$ ${r.subtotal.toFixed(2)}<br>`;
+  if (state.cupom.aplicado && state.cupom.desconto > 0) html += `Desconto: -R$ ${r.descontoValor.toFixed(2)}<br>`;
+  html += `Frete: R$ ${r.frete.toFixed(2)}<br><strong>Total: R$ ${r.total.toFixed(2)}</strong>`;
+  totalEl.innerHTML = html;
 }
 
 function renderFavoritos() {
   const c = document.getElementById("favoritos");
   if (!c) return;
-  c.innerHTML = "";
-  listarFavoritos().forEach(i => {
-    c.innerHTML += `<div>${i.nome} - R$ ${i.preco.toFixed(2)}</div>`;
-  });
+  c.innerHTML = listarFavoritos().map(i => `<div>${i.nome} - R$ ${i.preco.toFixed(2)}</div>`).join("");
 }
 
 function renderAll() {
@@ -372,11 +437,9 @@ function carregarUltimosPedidos() {}
 function salvarCarrinho() {
   localStorage.setItem("carrinho", JSON.stringify(state.carrinho));
 }
-
 function calcularSubtotal() {
   return state.carrinho.reduce((t, i) => t + i.preco * i.qtd, 0);
 }
-
 function calcularResumo() {
   const subtotal = calcularSubtotal();
   const descontoValor = subtotal * state.cupom.desconto;
@@ -384,15 +447,11 @@ function calcularResumo() {
   const total = subtotal - descontoValor + frete;
   return { subtotal, descontoValor, frete, total };
 }
-
 function mostrarMensagem(texto, tipo = "normal") {
   const msg = document.getElementById("mensagemSistema");
   if (!msg) return;
   msg.textContent = texto;
-  msg.style.background =
-    tipo === "erro" ? "#e74c3c" :
-    tipo === "sucesso" ? "#2ecc71" :
-    "#333";
+  msg.style.background = tipo === "erro" ? "#e74c3c" : tipo === "sucesso" ? "#2ecc71" : "#333";
   msg.style.display = "block";
   setTimeout(() => msg.style.display = "none", 3000);
 }
